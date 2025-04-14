@@ -42,6 +42,14 @@ type FeedQueryInterface interface {
 	GetIDIn() []string
 	SetIDIn(ids []string) FeedQueryInterface
 
+	IsLastFetchedAtLteSet() bool
+	GetLastFetchedAtLte() string
+	SetLastFetchedAtLte(lastFetchedAtLte string) FeedQueryInterface
+
+	IsLastFetchedAtGteSet() bool
+	GetLastFetchedAtGte() string
+	SetLastFetchedAtGte(lastFetchedAtGte string) FeedQueryInterface
+
 	IsLimitSet() bool
 	GetLimit() int
 	SetLimit(limit int) FeedQueryInterface

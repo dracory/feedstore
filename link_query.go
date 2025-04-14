@@ -11,8 +11,6 @@ import (
 
 // linkQuery implements the LinkQueryInterface
 type linkQuery struct {
-	params map[string]interface{}
-
 	isCountOnlySet bool
 	countOnly      bool
 
@@ -72,9 +70,7 @@ var _ LinkQueryInterface = (*linkQuery)(nil)
 
 // LinkQuery creates a new link query
 func LinkQuery() LinkQueryInterface {
-	return &linkQuery{
-		params: map[string]interface{}{},
-	}
+	return &linkQuery{}
 }
 
 // Validate validates the query parameters
