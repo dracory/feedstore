@@ -34,6 +34,10 @@ type LinkQueryInterface interface {
 	GetCreatedAtLte() string
 	SetCreatedAtLte(createdAt string) LinkQueryInterface
 
+	IsFeedIDSet() bool
+	GetFeedID() string
+	SetFeedID(feedID string) LinkQueryInterface
+
 	IsIDSet() bool
 	GetID() string
 	SetID(id string) LinkQueryInterface

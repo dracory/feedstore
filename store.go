@@ -215,8 +215,8 @@ func (storeImplementation *storeImplementation) FeedUpdate(feed FeedInterface) e
 
 	delete(dataChanged, COLUMN_ID) // ID is not updateable
 
-	if len(dataChanged) < 1 {
-		return nil
+	if len(dataChanged) <= 1 {
+		return nil // only the updated_at field is changed, no need to update
 	}
 
 	sqlStr, params, errSql := goqu.Dialect(storeImplementation.dbDriverName).
@@ -239,75 +239,6 @@ func (storeImplementation *storeImplementation) FeedUpdate(feed FeedInterface) e
 	feed.MarkAsNotDirty()
 
 	return err
-}
-
-// func (storeImplementation *storeImplementation) feedQuery(options FeedQueryOptions) *goqu.SelectDataset {
-// 	q := goqu.Dialect(storeImplementation.dbDriverName).
-// 		From(storeImplementation.feedTableName)
-
-// 	if options.ID != "" {
-// 		q = q.Where(goqu.C(COLUMN_ID).Eq(options.ID))
-// 	}
-
-// 	if options.Status != "" {
-// 		q = q.Where(goqu.C(COLUMN_STATUS).Eq(options.Status))
-// 	}
-
-// 	if len(options.StatusIn) > 0 {
-// 		q = q.Where(goqu.C(COLUMN_STATUS).In(options.StatusIn))
-// 	}
-
-// 	if options.LastFetchedAtLte != "" {
-// 		q = q.Where(goqu.C(COLUMN_LAST_FETCHED_AT).Lt(options.LastFetchedAtLte))
-// 	}
-
-// 	if options.LastFetchedAtGte != "" {
-// 		q = q.Where(goqu.C(COLUMN_LAST_FETCHED_AT).Gte(options.LastFetchedAtGte))
-// 	}
-
-// 	if !options.CountOnly {
-// 		if options.Limit > 0 {
-// 			q = q.Limit(uint(options.Limit))
-// 		}
-
-// 		if options.Offset > 0 {
-// 			q = q.Offset(uint(options.Offset))
-// 		}
-// 	}
-
-// 	sortOrder := sb.DESC
-// 	if options.SortOrder != "" {
-// 		sortOrder = options.SortOrder
-// 	}
-
-// 	if options.OrderBy != "" {
-// 		if strings.EqualFold(sortOrder, sb.ASC) {
-// 			q = q.Order(goqu.I(options.OrderBy).Asc())
-// 		} else {
-// 			q = q.Order(goqu.I(options.OrderBy).Desc())
-// 		}
-// 	}
-
-// 	if !options.WithDeleted {
-// 		q = q.Where(goqu.C(COLUMN_SOFT_DELETED_AT).Eq(sb.NULL_DATETIME))
-// 	}
-
-// 	return q
-// }
-
-type FeedQueryOptions struct {
-	ID               string
-	IDIn             []string
-	Status           string
-	StatusIn         []string
-	LastFetchedAtLte string
-	LastFetchedAtGte string
-	Offset           int
-	Limit            int
-	SortOrder        string
-	OrderBy          string
-	CountOnly        bool
-	WithDeleted      bool
 }
 
 func (storeImplementation *storeImplementation) LinkCreate(link LinkInterface) error {
@@ -457,8 +388,8 @@ func (storeImplementation *storeImplementation) LinkUpdate(link LinkInterface) e
 
 	delete(dataChanged, COLUMN_ID) // ID is not updateable
 
-	if len(dataChanged) < 1 {
-		return nil
+	if len(dataChanged) <= 1 {
+		return nil // only the updated_at field is changed, no need to update
 	}
 
 	sqlStr, params, errSql := goqu.Dialect(storeImplementation.dbDriverName).

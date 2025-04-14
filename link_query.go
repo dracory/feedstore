@@ -12,6 +12,57 @@ import (
 // linkQuery implements the LinkQueryInterface
 type linkQuery struct {
 	params map[string]interface{}
+
+	isCountOnlySet bool
+	countOnly      bool
+
+	isWithSoftDeletedSet bool
+	withSoftDeleted      bool
+
+	isOnlySoftDeletedSet bool
+	onlySoftDeleted      bool
+
+	isCreatedAtGteSet bool
+	createdAtGte      string
+
+	isCreatedAtLteSet bool
+	createdAtLte      string
+
+	isFeedIDSet bool
+	feedID      string
+
+	isIDSet bool
+	id      string
+
+	isIDInSet bool
+	idIn      []string
+
+	isLimitSet bool
+	limit      int
+
+	isOffsetSet bool
+	offset      int
+
+	isOwnerIDSet bool
+	ownerID      string
+
+	isOrderBySet bool
+	orderBy      string
+
+	isOrderDirectionSet bool
+	orderDirection      string
+
+	isStatusSet bool
+	status      string
+
+	isStatusInSet bool
+	statusIn      []string
+
+	isUpdatedAtGteSet bool
+	updatedAtGte      string
+
+	isUpdatedAtLteSet bool
+	updatedAtLte      string
 }
 
 var _ LinkQueryInterface = (*linkQuery)(nil)
@@ -82,6 +133,11 @@ func (q *linkQuery) ToSelectDataset(st StoreInterface) (selectDataset *goqu.Sele
 
 	if q.IsCreatedAtLteSet() {
 		sql = sql.Where(goqu.C(COLUMN_CREATED_AT).Lte(q.GetCreatedAtLte()))
+	}
+
+	// Feed ID filter
+	if q.IsFeedIDSet() {
+		sql = sql.Where(goqu.C(COLUMN_FEED_ID).Eq(q.GetFeedID()))
 	}
 
 	// ID filter
@@ -189,271 +245,301 @@ func (q *linkQuery) ToSelectDataset(st StoreInterface) (selectDataset *goqu.Sele
 // ============================================================================
 
 func (q *linkQuery) IsOwnerIDSet() bool {
-	return q.hasProperty("owner_id")
+	return q.isOwnerIDSet
 }
 
 func (q *linkQuery) GetOwnerID() string {
 	if q.IsOwnerIDSet() {
-		return q.params["owner_id"].(string)
+		return q.ownerID
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetOwnerID(ownerID string) LinkQueryInterface {
-	q.params["owner_id"] = ownerID
+	q.isOwnerIDSet = true
+	q.ownerID = ownerID
 	return q
 }
 
 func (q *linkQuery) IsCountOnlySet() bool {
-	return q.hasProperty("count_only")
+	return q.isCountOnlySet
 }
+
 func (q *linkQuery) GetCountOnly() bool {
 	if q.IsCountOnlySet() {
-		return q.params["count_only"].(bool)
+		return q.countOnly
 	}
 	return false
 }
 
 func (q *linkQuery) SetCountOnly(countOnly bool) LinkQueryInterface {
-	q.params["count_only"] = countOnly
+	q.isCountOnlySet = true
+	q.countOnly = countOnly
 	return q
 }
 
 func (q *linkQuery) IsCreatedAtGteSet() bool {
-	return q.hasProperty("created_at_gte")
+	return q.isCreatedAtGteSet
 }
 
 func (q *linkQuery) GetCreatedAtGte() string {
 	if q.IsCreatedAtGteSet() {
-		return q.params["created_at_gte"].(string)
+		return q.createdAtGte
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetCreatedAtGte(createdAtGte string) LinkQueryInterface {
-	q.params["created_at_gte"] = createdAtGte
+	q.isCreatedAtGteSet = true
+	q.createdAtGte = createdAtGte
 	return q
 }
 
 func (q *linkQuery) IsCreatedAtLteSet() bool {
-	return q.hasProperty("created_at_lte")
+	return q.isCreatedAtLteSet
 }
+
 func (q *linkQuery) GetCreatedAtLte() string {
 	if q.IsCreatedAtLteSet() {
-		return q.params["created_at_lte"].(string)
+		return q.createdAtLte
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetCreatedAtLte(createdAtLte string) LinkQueryInterface {
-	q.params["created_at_lte"] = createdAtLte
+	q.isCreatedAtLteSet = true
+	q.createdAtLte = createdAtLte
+	return q
+}
+
+func (q *linkQuery) IsFeedIDSet() bool {
+	return q.isFeedIDSet
+}
+func (q *linkQuery) GetFeedID() string {
+	if q.IsFeedIDSet() {
+		return q.feedID
+	}
+
+	return ""
+}
+func (q *linkQuery) SetFeedID(feedID string) LinkQueryInterface {
+	q.isFeedIDSet = true
+	q.feedID = feedID
 	return q
 }
 
 func (q *linkQuery) IsIDSet() bool {
-	return q.hasProperty("id")
+	return q.isIDSet
 }
 func (q *linkQuery) GetID() string {
 	if q.IsIDSet() {
-		return q.params["id"].(string)
+		return q.id
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetID(id string) LinkQueryInterface {
-	q.params["id"] = id
+	q.isIDSet = true
+	q.id = id
 	return q
 }
 
 func (q *linkQuery) IsIDInSet() bool {
-	return q.hasProperty("id_in")
+	return q.isIDInSet
 }
 
 func (q *linkQuery) GetIDIn() []string {
 	if q.IsIDInSet() {
-		return q.params["id_in"].([]string)
+		return q.idIn
 	}
 
 	return []string{}
 }
 
 func (q *linkQuery) SetIDIn(idIn []string) LinkQueryInterface {
-	q.params["id_in"] = idIn
+	q.isIDInSet = true
+	q.idIn = idIn
 	return q
 }
 
 func (q *linkQuery) IsLimitSet() bool {
-	return q.hasProperty("limit")
+	return q.isLimitSet
 }
 
 func (q *linkQuery) GetLimit() int {
 	if q.IsLimitSet() {
-		return q.params["limit"].(int)
+		return q.limit
 	}
 
 	return 0
 }
 
 func (q *linkQuery) SetLimit(limit int) LinkQueryInterface {
-	q.params["limit"] = limit
+	q.isLimitSet = true
+	q.limit = limit
 	return q
 }
 
 func (q *linkQuery) IsOffsetSet() bool {
-	return q.hasProperty("offset")
+	return q.isOffsetSet
 }
 
 func (q *linkQuery) GetOffset() int {
 	if q.IsOffsetSet() {
-		return q.params["offset"].(int)
+		return q.offset
 	}
 
 	return 0
 }
 
 func (q *linkQuery) SetOffset(offset int) LinkQueryInterface {
-	q.params["offset"] = offset
+	q.isOffsetSet = true
+	q.offset = offset
 	return q
 }
 
 func (q *linkQuery) IsOnlySoftDeletedSet() bool {
-	return q.hasProperty("only_soft_deleted")
+	return q.isOnlySoftDeletedSet
 }
 
 func (q *linkQuery) GetOnlySoftDeleted() bool {
 	if q.IsOnlySoftDeletedSet() {
-		return q.params["only_soft_deleted"].(bool)
+		return q.onlySoftDeleted
 	}
 
 	return false
 }
 
 func (q *linkQuery) SetOnlySoftDeleted(onlySoftDeleted bool) LinkQueryInterface {
-	q.params["only_soft_deleted"] = onlySoftDeleted
+	q.isOnlySoftDeletedSet = true
+	q.onlySoftDeleted = onlySoftDeleted
 	return q
 }
 
 func (q *linkQuery) IsOrderDirectionSet() bool {
-	return q.hasProperty("order_direction")
+	return q.isOrderDirectionSet
 }
 
 func (q *linkQuery) GetOrderDirection() string {
 	if q.IsOrderDirectionSet() {
-		return q.params["order_direction"].(string)
+		return q.orderDirection
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetOrderDirection(orderDirection string) LinkQueryInterface {
-	q.params["order_direction"] = orderDirection
+	q.isOrderDirectionSet = true
+	q.orderDirection = orderDirection
 	return q
 }
 
 func (q *linkQuery) IsOrderBySet() bool {
-	return q.hasProperty("order_by")
+	return q.isOrderBySet
 }
 
 func (q *linkQuery) GetOrderBy() string {
 	if q.IsOrderBySet() {
-		return q.params["order_by"].(string)
+		return q.orderBy
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetOrderBy(orderBy string) LinkQueryInterface {
-	q.params["order_by"] = orderBy
+	q.isOrderBySet = true
+	q.orderBy = orderBy
 	return q
 }
 
 func (q *linkQuery) IsStatusSet() bool {
-	return q.hasProperty("status")
+	return q.isStatusSet
 }
 
 func (q *linkQuery) GetStatus() string {
 	if q.IsStatusSet() {
-		return q.params["status"].(string)
+		return q.status
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetStatus(status string) LinkQueryInterface {
-	q.params["status"] = status
+	q.isStatusSet = true
+	q.status = status
 	return q
 }
 
 func (q *linkQuery) IsStatusInSet() bool {
-	return q.hasProperty("status_in")
+	return q.isStatusInSet
 }
 
 func (q *linkQuery) GetStatusIn() []string {
 	if q.IsStatusInSet() {
-		return q.params["status_in"].([]string)
+		return q.statusIn
 	}
 
 	return []string{}
 }
 
 func (q *linkQuery) SetStatusIn(statusIn []string) LinkQueryInterface {
-	q.params["status_in"] = statusIn
+	q.isStatusInSet = true
+	q.statusIn = statusIn
 	return q
 }
 
 func (q *linkQuery) IsUpdatedAtGteSet() bool {
-	return q.hasProperty("updated_at_gte")
+	return q.isUpdatedAtGteSet
 }
 func (q *linkQuery) GetUpdatedAtGte() string {
 	if q.IsUpdatedAtGteSet() {
-		return q.params["updated_at_gte"].(string)
+		return q.updatedAtGte
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetUpdatedAtGte(updatedAt string) LinkQueryInterface {
-	q.params["updated_at_gte"] = updatedAt
+	q.isUpdatedAtGteSet = true
+	q.updatedAtGte = updatedAt
 	return q
 }
 
 func (q *linkQuery) IsUpdatedAtLteSet() bool {
-	return q.hasProperty("updated_at_lte")
+	return q.isUpdatedAtLteSet
 }
 func (q *linkQuery) GetUpdatedAtLte() string {
 	if q.IsUpdatedAtLteSet() {
-		return q.params["updated_at_lte"].(string)
+		return q.updatedAtLte
 	}
 
 	return ""
 }
 
 func (q *linkQuery) SetUpdatedAtLte(updatedAt string) LinkQueryInterface {
-	q.params["updated_at_lte"] = updatedAt
+	q.isUpdatedAtLteSet = true
+	q.updatedAtLte = updatedAt
 	return q
 }
 
 func (q *linkQuery) IsWithSoftDeletedSet() bool {
-	return q.hasProperty("with_soft_deleted")
+	return q.isWithSoftDeletedSet
 }
 
 func (q *linkQuery) GetWithSoftDeleted() bool {
 	if q.IsWithSoftDeletedSet() {
-		return q.params["with_soft_deleted"].(bool)
+		return q.withSoftDeleted
 	}
 
 	return false
 }
 
 func (q *linkQuery) SetWithSoftDeleted(withSoftDeleted bool) LinkQueryInterface {
-	q.params["with_soft_deleted"] = withSoftDeleted
+	q.isWithSoftDeletedSet = true
+	q.withSoftDeleted = withSoftDeleted
 	return q
-}
-
-func (q *linkQuery) hasProperty(key string) bool {
-	return q.params[key] != nil
 }
