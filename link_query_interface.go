@@ -67,6 +67,10 @@ type LinkQueryInterface interface {
 	SetStatus(status string) LinkQueryInterface
 	SetStatusIn(statuses []string) LinkQueryInterface
 
+	IsURLSet() bool
+	GetURL() string
+	SetURL(url string) LinkQueryInterface
+
 	IsUpdatedAtGteSet() bool
 	GetUpdatedAtGte() string
 	SetUpdatedAtGte(updatedAt string) LinkQueryInterface

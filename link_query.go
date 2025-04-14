@@ -58,6 +58,9 @@ type linkQuery struct {
 	isStatusInSet bool
 	statusIn      []string
 
+	isURLSet bool
+	url      string
+
 	isUpdatedAtGteSet bool
 	updatedAtGte      string
 
@@ -112,6 +115,10 @@ func (q *linkQuery) Validate() error {
 		return errors.New("document query: status_in cannot be empty array")
 	}
 
+	if q.IsURLSet() && q.GetURL() == "" {
+		return errors.New("document query: url cannot be empty")
+	}
+
 	return nil
 }
 
@@ -158,6 +165,11 @@ func (q *linkQuery) ToSelectDataset(st StoreInterface) (selectDataset *goqu.Sele
 	// Status IN filter
 	if q.IsStatusInSet() {
 		sql = sql.Where(goqu.C(COLUMN_STATUS).In(q.GetStatusIn()))
+	}
+
+	// URL filter
+	if q.IsURLSet() {
+		sql = sql.Where(goqu.C(COLUMN_URL).Eq(q.GetURL()))
 	}
 
 	// Updated At filter
@@ -523,6 +535,24 @@ func (q *linkQuery) GetUpdatedAtLte() string {
 func (q *linkQuery) SetUpdatedAtLte(updatedAt string) LinkQueryInterface {
 	q.isUpdatedAtLteSet = true
 	q.updatedAtLte = updatedAt
+	return q
+}
+
+func (q *linkQuery) IsURLSet() bool {
+	return q.isURLSet
+}
+
+func (q *linkQuery) GetURL() string {
+	if q.IsURLSet() {
+		return q.url
+	}
+
+	return ""
+}
+
+func (q *linkQuery) SetURL(url string) LinkQueryInterface {
+	q.isURLSet = true
+	q.url = url
 	return q
 }
 
