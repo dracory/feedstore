@@ -10,9 +10,6 @@ type FeedInterface interface {
 	CreatedAt() string
 	CreatedAtCarbon() *carbon.Carbon
 	SetCreatedAt(createdAt string) FeedInterface
-	DeletedAt() string
-	DeletedAtCarbon() *carbon.Carbon
-	SetDeletedAt(deletedAt string) FeedInterface
 	Description() string
 	SetDescription(description string) FeedInterface
 	FetchInterval() string
@@ -25,6 +22,9 @@ type FeedInterface interface {
 	SetMemo(memo string) FeedInterface
 	Name() string
 	SetName(name string) FeedInterface
+	SoftDeletedAt() string
+	SoftDeletedAtCarbon() *carbon.Carbon
+	SetSoftDeletedAt(softDeletedAt string) FeedInterface
 	Status() string
 	SetStatus(status string) FeedInterface
 	UpdatedAt() string

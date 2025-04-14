@@ -38,7 +38,7 @@ func NewFeed() *feedImplementation {
 	feed.SetMemo("")
 	feed.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	feed.SetDeletedAt(sb.NULL_DATETIME)
+	feed.SetSoftDeletedAt(sb.MAX_DATETIME)
 
 	return feed
 }
@@ -65,17 +65,6 @@ func (feed *feedImplementation) CreatedAtCarbon() *carbon.Carbon {
 }
 func (feed *feedImplementation) SetCreatedAt(createdAt string) FeedInterface {
 	feed.Set(COLUMN_CREATED_AT, createdAt)
-	return feed
-}
-
-func (feed *feedImplementation) DeletedAt() string {
-	return feed.Get(COLUMN_DELETED_AT)
-}
-func (feed *feedImplementation) DeletedAtCarbon() *carbon.Carbon {
-	return carbon.Parse(feed.DeletedAt())
-}
-func (feed *feedImplementation) SetDeletedAt(deletedAt string) FeedInterface {
-	feed.Set(COLUMN_DELETED_AT, deletedAt)
 	return feed
 }
 
@@ -131,6 +120,19 @@ func (feed *feedImplementation) Name() string {
 }
 func (feed *feedImplementation) SetName(name string) FeedInterface {
 	feed.Set(COLUMN_NAME, name)
+	return feed
+}
+
+func (feed *feedImplementation) SoftDeletedAt() string {
+	return feed.Get(COLUMN_SOFT_DELETED_AT)
+}
+
+func (feed *feedImplementation) SoftDeletedAtCarbon() *carbon.Carbon {
+	return carbon.Parse(feed.SoftDeletedAt())
+}
+
+func (feed *feedImplementation) SetSoftDeletedAt(softDeletedAt string) FeedInterface {
+	feed.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
 	return feed
 }
 

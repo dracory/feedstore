@@ -23,9 +23,6 @@ type LinkInterface interface {
 	CreatedAt() string
 	CreatedAtCarbon() *carbon.Carbon
 	SetCreatedAt(createdAt string) LinkInterface
-	DeletedAt() string
-	DeletedAtCarbon() *carbon.Carbon
-	SetDeletedAt(deletedAt string) LinkInterface
 	Description() string
 	SetDescription(description string) LinkInterface
 	FeedID() string
@@ -39,6 +36,9 @@ type LinkInterface interface {
 	Time() string
 	TimeCarbon() *carbon.Carbon
 	SetTime(time string) LinkInterface
+	SoftDeletedAt() string
+	SoftDeletedAtCarbon() *carbon.Carbon
+	SetSoftDeletedAt(softDeletedAt string) LinkInterface
 	UpdatedAt() string
 	UpdatedAtCarbon() *carbon.Carbon
 	SetUpdatedAt(updatedAt string) LinkInterface

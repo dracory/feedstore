@@ -42,8 +42,7 @@ func NewLink() *linkImplementation {
 	link.SetTime(sb.NULL_DATETIME)
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	link.SetDeletedAt(sb.NULL_DATETIME)
-
+	link.SetSoftDeletedAt(sb.MAX_DATETIME)
 	return link
 }
 
@@ -61,6 +60,15 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 
 // == SETTERS AND GETTERS =====================================================
 
+func (link *linkImplementation) CheckedAt() string {
+	return link.Get(COLUMN_CHECKED_AT)
+}
+
+func (link *linkImplementation) SetCheckedAt(timeChecked string) LinkInterface {
+	link.Set(COLUMN_CHECKED_AT, timeChecked)
+	return link
+}
+
 func (link *linkImplementation) CreatedAt() string {
 	return link.Get(COLUMN_CREATED_AT)
 }
@@ -71,19 +79,6 @@ func (link *linkImplementation) CreatedAtCarbon() *carbon.Carbon {
 
 func (link *linkImplementation) SetCreatedAt(createdAt string) LinkInterface {
 	link.Set(COLUMN_CREATED_AT, createdAt)
-	return link
-}
-
-func (link *linkImplementation) DeletedAt() string {
-	return link.Get(COLUMN_DELETED_AT)
-}
-
-func (link *linkImplementation) DeletedAtCarbon() *carbon.Carbon {
-	return carbon.Parse(link.DeletedAt())
-}
-
-func (link *linkImplementation) SetDeletedAt(deletedAt string) LinkInterface {
-	link.Set(COLUMN_DELETED_AT, deletedAt)
 	return link
 }
 
@@ -198,12 +193,15 @@ func (link *linkImplementation) SetTime(time string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) CheckedAt() string {
-	return link.Get(COLUMN_CHECKED_AT)
+func (link *linkImplementation) SoftDeletedAt() string {
+	return link.Get(COLUMN_SOFT_DELETED_AT)
+}
+func (link *linkImplementation) SoftDeletedAtCarbon() *carbon.Carbon {
+	return carbon.Parse(link.SoftDeletedAt())
 }
 
-func (link *linkImplementation) SetCheckedAt(timeChecked string) LinkInterface {
-	link.Set(COLUMN_CHECKED_AT, timeChecked)
+func (link *linkImplementation) SetSoftDeletedAt(softDeletedAt string) LinkInterface {
+	link.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
 	return link
 }
 

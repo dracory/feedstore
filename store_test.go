@@ -213,21 +213,21 @@ func TestStoreLinkFindByID(t *testing.T) {
 		t.Error("unexpected error:", err)
 	}
 
-	feedFound, errFind := store.LinkFindByID(link.ID())
+	linkFound, errFind := store.LinkFindByID(link.ID())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
 	}
 
-	if feedFound == nil {
+	if linkFound == nil {
 		t.Fatal("Link MUST NOT be nil")
 	}
 
-	if feedFound.ID() != link.ID() {
+	if linkFound.ID() != link.ID() {
 		t.Fatal("IDs do not match")
 	}
 
-	if feedFound.Status() != link.Status() {
+	if linkFound.Status() != link.Status() {
 		t.Fatal("Statuses do not match")
 	}
 }

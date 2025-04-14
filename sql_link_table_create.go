@@ -70,8 +70,9 @@ func (st *storeImplementation) sqlLinkTableCreate() string {
 			Type: sb.COLUMN_TYPE_DATETIME,
 		}).
 		Column(sb.Column{
-			Name: COLUMN_DELETED_AT,
-			Type: sb.COLUMN_TYPE_DATETIME,
+			Name:    COLUMN_SOFT_DELETED_AT,
+			Type:    sb.COLUMN_TYPE_DATETIME,
+			Default: sb.MAX_DATETIME,
 		}).
 		CreateIfNotExists()
 
