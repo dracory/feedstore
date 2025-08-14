@@ -8,6 +8,7 @@ type StoreInterface interface {
 	GetFeedTableName() string
 	GetLinkTableName() string
 
+	FeedCount(query FeedQueryInterface) (int64, error)
 	FeedCreate(feed FeedInterface) error
 	FeedDelete(feed FeedInterface) error
 	FeedDeleteByID(id string) error
@@ -17,6 +18,7 @@ type StoreInterface interface {
 	FeedSoftDeleteByID(id string) error
 	FeedUpdate(feed FeedInterface) error
 
+	LinkCount(query LinkQueryInterface) (int64, error)
 	LinkCreate(link LinkInterface) error
 	LinkDelete(link LinkInterface) error
 	LinkDeleteByID(id string) error

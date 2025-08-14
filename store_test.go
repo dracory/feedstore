@@ -625,6 +625,86 @@ func TestStoreFeedUpdate(t *testing.T) {
 
 // --- Link Tests ---
 
+func TestStoreLinkCount(t *testing.T) {
+    db := initDB(":memory:")
+    defer db.Close()
+    store := createTestStore(t, db, "feed_link_count", "link_link_count")
+
+    // 0. Empty store should return 0
+    total, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
+    if err != nil {
+        t.Fatalf("LinkCount on empty store failed: %v", err)
+    }
+    if total != 0 {
+        t.Errorf("Expected 0, got %d", total)
+    }
+
+    // 1. Create test data: 5 active, 2 inactive across two feeds
+    feeds := []string{"feedA", "feedB"}
+    mk := func(title, status, feedID, url string) string {
+        l := NewLink().SetTitle(title).SetStatus(status).SetFeedID(feedID).SetURL(url)
+        if err := store.LinkCreate(l); err != nil {
+            t.Fatalf("LinkCreate failed: %v", err)
+        }
+        return l.ID()
+    }
+
+    ids := []string{}
+    ids = append(ids, mk("A1", LINK_STATUS_ACTIVE, feeds[0], "http://a1"))
+    ids = append(ids, mk("A2", LINK_STATUS_ACTIVE, feeds[0], "http://a2"))
+    ids = append(ids, mk("A3", LINK_STATUS_ACTIVE, feeds[1], "http://a3"))
+    ids = append(ids, mk("A4", LINK_STATUS_ACTIVE, feeds[1], "http://a4"))
+    ids = append(ids, mk("A5", LINK_STATUS_ACTIVE, feeds[1], "http://a5"))
+    ids = append(ids, mk("I1", LINK_STATUS_INACTIVE, feeds[0], "http://i1"))
+    ids = append(ids, mk("I2", LINK_STATUS_INACTIVE, feeds[1], "http://i2"))
+
+    // 2. Count by status
+    totalActive, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
+    if err != nil {
+        t.Fatalf("LinkCount active failed: %v", err)
+    }
+    if totalActive != 5 {
+        t.Errorf("Expected 5 active, got %d", totalActive)
+    }
+
+    totalInactive, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_INACTIVE))
+    if err != nil {
+        t.Fatalf("LinkCount inactive failed: %v", err)
+    }
+    if totalInactive != 2 {
+        t.Errorf("Expected 2 inactive, got %d", totalInactive)
+    }
+
+    // 3. Soft delete one active and verify default excludes it
+    if err := store.LinkSoftDeleteByID(ids[0]); err != nil {
+        t.Fatalf("LinkSoftDeleteByID failed: %v", err)
+    }
+    totalActiveAfterSD, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
+    if err != nil {
+        t.Fatalf("LinkCount after soft delete failed: %v", err)
+    }
+    if totalActiveAfterSD != 4 {
+        t.Errorf("Expected 4 active after soft-delete, got %d", totalActiveAfterSD)
+    }
+
+    // 4. Including soft-deleted should bring it back
+    totalActiveWithSD, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetWithSoftDeleted(true))
+    if err != nil {
+        t.Fatalf("LinkCount with soft deleted failed: %v", err)
+    }
+    if totalActiveWithSD != 5 {
+        t.Errorf("Expected 5 active including soft-deleted, got %d", totalActiveWithSD)
+    }
+
+    // 5. Filter by FeedID
+    totalFeedA, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetFeedID(feeds[0]))
+    if err != nil {
+        t.Fatalf("LinkCount by feed failed: %v", err)
+    }
+    if totalFeedA != 1 { // one remaining active in feedA after soft delete
+        t.Errorf("Expected 1 active for feedA, got %d", totalFeedA)
+    }
+}
 func TestStoreLinkDelete(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()

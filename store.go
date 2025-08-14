@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strconv"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/dromara/carbon/v2"
@@ -20,6 +21,57 @@ type storeImplementation struct {
 	dbDriverName       string
 	automigrateEnabled bool
 	debugEnabled       bool
+}
+
+// FeedCount returns the total number of feeds matching the query filters
+func (storeImplementation *storeImplementation) FeedCount(query FeedQueryInterface) (int64, error) {
+	if query == nil {
+		query = FeedQuery()
+	}
+
+	// ensure count-only (disables limit/offset in ToSelectDataset)
+	query = query.SetCountOnly(true)
+
+	q, _, err := query.ToSelectDataset(storeImplementation)
+	if err != nil {
+		return 0, err
+	}
+
+	// Build SELECT COUNT(*) directly from the same dataset, removing
+	// select list, ordering, limit and offset to avoid unnecessary columns
+	countSQL, countParams, errSql := q.
+		ClearSelect().
+		ClearOrder().
+		ClearLimit().
+		ClearOffset().
+		Prepared(true).
+		Select(goqu.COUNT("*").As("count")).
+		ToSQL()
+	if errSql != nil {
+		return 0, errSql
+	}
+
+	if storeImplementation.debugEnabled {
+		log.Println(countSQL)
+	}
+
+	db := sb.NewDatabase(storeImplementation.db, storeImplementation.dbDriverName)
+	rows, err := db.SelectToMapString(countSQL, countParams...)
+	if err != nil {
+		return 0, err
+	}
+	if len(rows) == 0 {
+		return 0, nil
+	}
+	s := rows[0]["count"]
+	if s == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
 // AutoMigrate auto migrate
@@ -182,6 +234,57 @@ func (storeImplementation *storeImplementation) FeedList(query FeedQueryInterfac
 	})
 
 	return list, nil
+}
+
+// LinkCount returns the total number of links matching the query filters
+func (storeImplementation *storeImplementation) LinkCount(query LinkQueryInterface) (int64, error) {
+	if query == nil {
+		query = LinkQuery()
+	}
+
+	// ensure count-only (disables limit/offset in ToSelectDataset)
+	query = query.SetCountOnly(true)
+
+	q, _, err := query.ToSelectDataset(storeImplementation)
+	if err != nil {
+		return 0, err
+	}
+
+	// Build SELECT COUNT(*) directly from the same dataset, removing
+	// select list, ordering, limit and offset to avoid unnecessary columns
+	countSQL, countParams, errSql := q.
+		ClearSelect().
+		ClearOrder().
+		ClearLimit().
+		ClearOffset().
+		Prepared(true).
+		Select(goqu.COUNT("*").As("count")).
+		ToSQL()
+	if errSql != nil {
+		return 0, errSql
+	}
+
+	if storeImplementation.debugEnabled {
+		log.Println(countSQL)
+	}
+
+	db := sb.NewDatabase(storeImplementation.db, storeImplementation.dbDriverName)
+	rows, err := db.SelectToMapString(countSQL, countParams...)
+	if err != nil {
+		return 0, err
+	}
+	if len(rows) == 0 {
+		return 0, nil
+	}
+	s := rows[0]["count"]
+	if s == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return n, nil
 }
 
 func (storeImplementation *storeImplementation) FeedSoftDelete(feed FeedInterface) error {
