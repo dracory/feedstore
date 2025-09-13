@@ -1,11 +1,11 @@
 package feedstore
 
 import (
+	"github.com/dracory/dataobject"
+	"github.com/dracory/sb"
+	"github.com/dracory/uid"
 	"github.com/dromara/carbon/v2"
-	"github.com/gouniverse/dataobject"
-	"github.com/gouniverse/sb"
-	"github.com/gouniverse/uid"
-	"github.com/gouniverse/utils"
+	"github.com/spf13/cast"
 )
 
 // ============================================================================
@@ -82,7 +82,7 @@ func (feed *feedImplementation) FetchInterval() string {
 }
 
 func (feed *feedImplementation) FetchIntervalInt64() (int64, error) {
-	return utils.ToInt(feed.FetchInterval())
+	return cast.ToInt64E(feed.FetchInterval())
 }
 
 func (feed *feedImplementation) SetFetchInterval(fetchInterval string) FeedInterface {

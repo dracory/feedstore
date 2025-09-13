@@ -1,7 +1,7 @@
 package feedstore
 
 import (
-	"github.com/gouniverse/sb"
+	"github.com/dracory/sb"
 )
 
 // sqlFeedTableCreate returns a SQL string for creating the Feed table

@@ -1,6 +1,6 @@
 package feedstore
 
-import "github.com/gouniverse/sb"
+import "github.com/dracory/sb"
 
 func (st *storeImplementation) sqlLinkTableCreate() string {
 	sql := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
