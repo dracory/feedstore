@@ -1,13 +1,14 @@
 package feedstore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"log"
 	"strconv"
 
 	"github.com/doug-martin/goqu/v9"
-	"github.com/dracory/sb"
+	"github.com/dracory/database"
 	"github.com/dromara/carbon/v2"
 	"github.com/samber/lo"
 )
@@ -24,7 +25,7 @@ type storeImplementation struct {
 }
 
 // FeedCount returns the total number of feeds matching the query filters
-func (storeImplementation *storeImplementation) FeedCount(query FeedQueryInterface) (int64, error) {
+func (storeImplementation *storeImplementation) FeedCount(ctx context.Context, query FeedQueryInterface) (int64, error) {
 	if query == nil {
 		query = FeedQuery()
 	}
@@ -55,8 +56,7 @@ func (storeImplementation *storeImplementation) FeedCount(query FeedQueryInterfa
 		log.Println(countSQL)
 	}
 
-	db := sb.NewDatabase(storeImplementation.db, storeImplementation.dbDriverName)
-	rows, err := db.SelectToMapString(countSQL, countParams...)
+	rows, err := database.SelectToMapString(database.NewQueryableContext(ctx, storeImplementation.db), countSQL, countParams...)
 	if err != nil {
 		return 0, err
 	}
@@ -120,7 +120,7 @@ func (storeImplementation *storeImplementation) GetLinkTableName() string {
 	return storeImplementation.linkTableName
 }
 
-func (storeImplementation *storeImplementation) FeedCreate(feed FeedInterface) error {
+func (storeImplementation *storeImplementation) FeedCreate(ctx context.Context, feed FeedInterface) error {
 	feed.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
@@ -140,7 +140,7 @@ func (storeImplementation *storeImplementation) FeedCreate(feed FeedInterface) e
 		log.Println(sqlStr)
 	}
 
-	_, err := storeImplementation.db.Exec(sqlStr, params...)
+	_, err := storeImplementation.db.ExecContext(ctx, sqlStr, params...)
 
 	if err != nil {
 		return err
@@ -151,15 +151,15 @@ func (storeImplementation *storeImplementation) FeedCreate(feed FeedInterface) e
 	return nil
 }
 
-func (storeImplementation *storeImplementation) FeedDelete(feed FeedInterface) error {
+func (storeImplementation *storeImplementation) FeedDelete(ctx context.Context, feed FeedInterface) error {
 	if feed == nil {
 		return errors.New("feed is nil")
 	}
 
-	return storeImplementation.FeedDeleteByID(feed.ID())
+	return storeImplementation.FeedDeleteByID(ctx, feed.ID())
 }
 
-func (storeImplementation *storeImplementation) FeedDeleteByID(id string) error {
+func (storeImplementation *storeImplementation) FeedDeleteByID(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("feed id is empty")
 	}
@@ -183,12 +183,12 @@ func (storeImplementation *storeImplementation) FeedDeleteByID(id string) error 
 	return err
 }
 
-func (storeImplementation *storeImplementation) FeedFindByID(id string) (FeedInterface, error) {
+func (storeImplementation *storeImplementation) FeedFindByID(ctx context.Context, id string) (FeedInterface, error) {
 	if id == "" {
 		return nil, errors.New("feed id is empty")
 	}
 
-	list, err := storeImplementation.FeedList(FeedQuery().
+	list, err := storeImplementation.FeedList(ctx, FeedQuery().
 		SetID(id).
 		SetLimit(1))
 
@@ -203,7 +203,7 @@ func (storeImplementation *storeImplementation) FeedFindByID(id string) (FeedInt
 	return nil, nil
 }
 
-func (storeImplementation *storeImplementation) FeedList(query FeedQueryInterface) ([]FeedInterface, error) {
+func (storeImplementation *storeImplementation) FeedList(ctx context.Context, query FeedQueryInterface) ([]FeedInterface, error) {
 	q, columns, err := query.ToSelectDataset(storeImplementation)
 
 	if err != nil {
@@ -220,8 +220,7 @@ func (storeImplementation *storeImplementation) FeedList(query FeedQueryInterfac
 		log.Println(sqlStr)
 	}
 
-	db := sb.NewDatabase(storeImplementation.db, storeImplementation.dbDriverName)
-	modelMaps, err := db.SelectToMapString(sqlStr, sqlParams...)
+	modelMaps, err := database.SelectToMapString(database.NewQueryableContext(ctx, storeImplementation.db), sqlStr, sqlParams...)
 	if err != nil {
 		return []FeedInterface{}, err
 	}
@@ -237,7 +236,7 @@ func (storeImplementation *storeImplementation) FeedList(query FeedQueryInterfac
 }
 
 // LinkCount returns the total number of links matching the query filters
-func (storeImplementation *storeImplementation) LinkCount(query LinkQueryInterface) (int64, error) {
+func (storeImplementation *storeImplementation) LinkCount(ctx context.Context, query LinkQueryInterface) (int64, error) {
 	if query == nil {
 		query = LinkQuery()
 	}
@@ -268,8 +267,7 @@ func (storeImplementation *storeImplementation) LinkCount(query LinkQueryInterfa
 		log.Println(countSQL)
 	}
 
-	db := sb.NewDatabase(storeImplementation.db, storeImplementation.dbDriverName)
-	rows, err := db.SelectToMapString(countSQL, countParams...)
+	rows, err := database.SelectToMapString(database.NewQueryableContext(ctx, storeImplementation.db), countSQL, countParams...)
 	if err != nil {
 		return 0, err
 	}
@@ -287,27 +285,27 @@ func (storeImplementation *storeImplementation) LinkCount(query LinkQueryInterfa
 	return n, nil
 }
 
-func (storeImplementation *storeImplementation) FeedSoftDelete(feed FeedInterface) error {
+func (storeImplementation *storeImplementation) FeedSoftDelete(ctx context.Context, feed FeedInterface) error {
 	if feed == nil {
 		return errors.New("feed is nil")
 	}
 
 	feed.SetSoftDeletedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
-	return storeImplementation.FeedUpdate(feed)
+	return storeImplementation.FeedUpdate(ctx, feed)
 }
 
-func (storeImplementation *storeImplementation) FeedSoftDeleteByID(id string) error {
-	feed, err := storeImplementation.FeedFindByID(id)
+func (storeImplementation *storeImplementation) FeedSoftDeleteByID(ctx context.Context, id string) error {
+	feed, err := storeImplementation.FeedFindByID(ctx, id)
 
 	if err != nil {
 		return err
 	}
 
-	return storeImplementation.FeedSoftDelete(feed)
+	return storeImplementation.FeedSoftDelete(ctx, feed)
 }
 
-func (storeImplementation *storeImplementation) FeedUpdate(feed FeedInterface) error {
+func (storeImplementation *storeImplementation) FeedUpdate(ctx context.Context, feed FeedInterface) error {
 	if feed == nil {
 		return errors.New("feed is nil")
 	}
@@ -344,7 +342,7 @@ func (storeImplementation *storeImplementation) FeedUpdate(feed FeedInterface) e
 	return err
 }
 
-func (storeImplementation *storeImplementation) LinkCreate(link LinkInterface) error {
+func (storeImplementation *storeImplementation) LinkCreate(ctx context.Context, link LinkInterface) error {
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
@@ -375,15 +373,15 @@ func (storeImplementation *storeImplementation) LinkCreate(link LinkInterface) e
 	return nil
 }
 
-func (storeImplementation *storeImplementation) LinkDelete(link LinkInterface) error {
+func (storeImplementation *storeImplementation) LinkDelete(ctx context.Context, link LinkInterface) error {
 	if link == nil {
 		return errors.New("link is nil")
 	}
 
-	return storeImplementation.LinkDeleteByID(link.ID())
+	return storeImplementation.LinkDeleteByID(ctx, link.ID())
 }
 
-func (storeImplementation *storeImplementation) LinkDeleteByID(id string) error {
+func (storeImplementation *storeImplementation) LinkDeleteByID(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("link id is empty")
 	}
@@ -407,12 +405,12 @@ func (storeImplementation *storeImplementation) LinkDeleteByID(id string) error 
 	return err
 }
 
-func (storeImplementation *storeImplementation) LinkFindByID(id string) (LinkInterface, error) {
+func (storeImplementation *storeImplementation) LinkFindByID(ctx context.Context, id string) (LinkInterface, error) {
 	if id == "" {
 		return nil, errors.New("link id is empty")
 	}
 
-	list, err := storeImplementation.LinkList(LinkQuery().
+	list, err := storeImplementation.LinkList(ctx, LinkQuery().
 		SetID(id).
 		SetLimit(1))
 
@@ -427,7 +425,7 @@ func (storeImplementation *storeImplementation) LinkFindByID(id string) (LinkInt
 	return nil, nil
 }
 
-func (storeImplementation *storeImplementation) LinkList(query LinkQueryInterface) ([]LinkInterface, error) {
+func (storeImplementation *storeImplementation) LinkList(ctx context.Context, query LinkQueryInterface) ([]LinkInterface, error) {
 	q, columns, err := query.ToSelectDataset(storeImplementation)
 
 	if err != nil {
@@ -444,8 +442,7 @@ func (storeImplementation *storeImplementation) LinkList(query LinkQueryInterfac
 		log.Println(sqlStr)
 	}
 
-	db := sb.NewDatabase(storeImplementation.db, storeImplementation.dbDriverName)
-	modelMaps, err := db.SelectToMapString(sqlStr, sqlParams...)
+	modelMaps, err := database.SelectToMapString(database.NewQueryableContext(ctx, storeImplementation.db), sqlStr, sqlParams...)
 	if err != nil {
 		return []LinkInterface{}, err
 	}
@@ -460,27 +457,27 @@ func (storeImplementation *storeImplementation) LinkList(query LinkQueryInterfac
 	return list, nil
 }
 
-func (storeImplementation *storeImplementation) LinkSoftDelete(link LinkInterface) error {
+func (storeImplementation *storeImplementation) LinkSoftDelete(ctx context.Context, link LinkInterface) error {
 	if link == nil {
 		return errors.New("link is nil")
 	}
 
 	link.SetSoftDeletedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
-	return storeImplementation.LinkUpdate(link)
+	return storeImplementation.LinkUpdate(ctx, link)
 }
 
-func (storeImplementation *storeImplementation) LinkSoftDeleteByID(id string) error {
-	link, err := storeImplementation.LinkFindByID(id)
+func (storeImplementation *storeImplementation) LinkSoftDeleteByID(ctx context.Context, id string) error {
+	link, err := storeImplementation.LinkFindByID(ctx, id)
 
 	if err != nil {
 		return err
 	}
 
-	return storeImplementation.LinkSoftDelete(link)
+	return storeImplementation.LinkSoftDelete(ctx, link)
 }
 
-func (storeImplementation *storeImplementation) LinkUpdate(link LinkInterface) error {
+func (storeImplementation *storeImplementation) LinkUpdate(ctx context.Context, link LinkInterface) error {
 	if link == nil {
 		return errors.New("link is nil")
 	}

@@ -1,6 +1,7 @@
 package feedstore
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -161,17 +162,18 @@ func TestStoreFeedDelete(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_delete", "link_delete")
+	ctx := context.Background()
 
 	// 1. Create a feed
 	feed := NewFeed()
 	feed.SetName("FeedToDelete")
-	err := store.FeedCreate(feed)
+	err := store.FeedCreate(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedCreate should succeed, but got error: %v", err)
 	}
 
 	// 2. Verify it exists
-	foundFeed, err := store.FeedFindByID(feed.ID())
+	foundFeed, err := store.FeedFindByID(ctx, feed.ID())
 	if err != nil {
 		t.Fatalf("FeedFindByID should succeed before delete, but got error: %v", err)
 	}
@@ -180,13 +182,13 @@ func TestStoreFeedDelete(t *testing.T) {
 	}
 
 	// 3. Delete using FeedDelete
-	err = store.FeedDelete(feed)
+	err = store.FeedDelete(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedDelete should succeed, but got error: %v", err)
 	}
 
 	// 4. Verify it's gone
-	foundFeed, err = store.FeedFindByID(feed.ID())
+	foundFeed, err = store.FeedFindByID(ctx, feed.ID())
 	if err != nil {
 		t.Fatalf("FeedFindByID should succeed after delete, but got error: %v", err)
 	}
@@ -195,13 +197,13 @@ func TestStoreFeedDelete(t *testing.T) {
 	}
 
 	// 5. Test deleting nil feed
-	err = store.FeedDelete(nil)
+	err = store.FeedDelete(ctx, nil)
 	if err == nil {
 		t.Error("FeedDelete should return error for nil feed, but got nil")
 	}
 
 	// 6. Test deleting non-existent feed (by ID)
-	err = store.FeedDeleteByID("non-existent-id")
+	err = store.FeedDeleteByID(ctx, "non-existent-id")
 	if err != nil {
 		t.Errorf("FeedDeleteByID for non-existent ID should not error (idempotent), but got: %v", err)
 	}
@@ -211,18 +213,19 @@ func TestStoreFeedDeleteByID(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_delete_id", "link_delete_id")
+	ctx := context.Background()
 
 	// 1. Create a feed
 	feed := NewFeed()
 	feed.SetName("FeedToDeleteByID")
-	err := store.FeedCreate(feed)
+	err := store.FeedCreate(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedCreate should succeed, but got error: %v", err)
 	}
 	feedID := feed.ID()
 
 	// 2. Verify it exists
-	foundFeed, err := store.FeedFindByID(feedID)
+	foundFeed, err := store.FeedFindByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedFindByID should succeed before delete, but got error: %v", err)
 	}
@@ -231,13 +234,13 @@ func TestStoreFeedDeleteByID(t *testing.T) {
 	}
 
 	// 3. Delete using FeedDeleteByID
-	err = store.FeedDeleteByID(feedID)
+	err = store.FeedDeleteByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedDeleteByID should succeed, but got error: %v", err)
 	}
 
 	// 4. Verify it's gone
-	foundFeed, err = store.FeedFindByID(feedID)
+	foundFeed, err = store.FeedFindByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedFindByID should succeed after delete, but got error: %v", err)
 	}
@@ -246,7 +249,7 @@ func TestStoreFeedDeleteByID(t *testing.T) {
 	}
 
 	// 5. Test deleting with empty ID
-	err = store.FeedDeleteByID("")
+	err = store.FeedDeleteByID(ctx, "")
 	if err == nil {
 		t.Error("FeedDeleteByID should return error for empty ID, but got nil")
 	}
@@ -256,6 +259,7 @@ func TestStoreFeedList(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_list", "link_list")
+	ctx := context.Background()
 
 	// Create test feeds
 	feed1 := NewFeed().SetName("Feed 1").SetStatus(FEED_STATUS_ACTIVE)
@@ -263,22 +267,22 @@ func TestStoreFeedList(t *testing.T) {
 	feed3 := NewFeed().SetName("Feed 3").SetStatus(FEED_STATUS_ACTIVE)
 	feed4 := NewFeed().SetName("Feed 4").SetStatus(FEED_STATUS_ACTIVE) // To be soft deleted
 
-	if err := store.FeedCreate(feed1); err != nil {
+	if err := store.FeedCreate(ctx, feed1); err != nil {
 		t.Fatalf("Failed to create feed1: %v", err)
 	}
 	time.Sleep(1 * time.Second)
-	if err := store.FeedCreate(feed2); err != nil {
+	if err := store.FeedCreate(ctx, feed2); err != nil {
 		t.Fatalf("Failed to create feed2: %v", err)
 	}
 	time.Sleep(1 * time.Second)
-	if err := store.FeedCreate(feed3); err != nil {
+	if err := store.FeedCreate(ctx, feed3); err != nil {
 		t.Fatalf("Failed to create feed3: %v", err)
 	}
 	time.Sleep(1 * time.Second)
-	if err := store.FeedCreate(feed4); err != nil {
+	if err := store.FeedCreate(ctx, feed4); err != nil {
 		t.Fatalf("Failed to create feed4: %v", err)
 	}
-	if err := store.FeedSoftDelete(feed4); err != nil {
+	if err := store.FeedSoftDelete(ctx, feed4); err != nil {
 		t.Fatalf("Failed to soft delete feed4: %v", err)
 	} // Soft delete feed4
 
@@ -362,7 +366,7 @@ func TestStoreFeedList(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			feeds, err := store.FeedList(tc.query)
+			feeds, err := store.FeedList(ctx, tc.query)
 
 			if tc.expectError {
 				if err == nil {
@@ -405,17 +409,18 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_soft_delete", "link_soft_delete")
+	ctx := context.Background()
 
 	// 1. Create a feed
 	feed := NewFeed().SetName("FeedToSoftDelete")
-	err := store.FeedCreate(feed)
+	err := store.FeedCreate(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedCreate failed: %v", err)
 	}
 	initialUpdatedAt := feed.UpdatedAt()
 
 	// 2. Verify it exists and is not soft deleted
-	foundFeed, err := store.FeedFindByID(feed.ID())
+	foundFeed, err := store.FeedFindByID(ctx, feed.ID())
 	if err != nil {
 		t.Fatalf("FeedFindByID before soft delete failed: %v", err)
 	}
@@ -429,7 +434,7 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 
 	// 3. Soft delete using FeedSoftDelete
 	time.Sleep(1 * time.Second) // Ensure UpdatedAt changes
-	err = store.FeedSoftDelete(feed)
+	err = store.FeedSoftDelete(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedSoftDelete failed: %v", err)
 	}
@@ -443,7 +448,7 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	}
 
 	// 5. Verify it's not found by default FindByID
-	foundFeed, err = store.FeedFindByID(feed.ID())
+	foundFeed, err = store.FeedFindByID(ctx, feed.ID())
 	if err != nil {
 		t.Fatalf("FeedFindByID after soft delete failed: %v", err)
 	}
@@ -452,7 +457,7 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	}
 
 	// 6. Verify it IS found when including soft deleted
-	list, err := store.FeedList(FeedQuery().SetID(feed.ID()).SetWithSoftDeleted(true))
+	list, err := store.FeedList(ctx, FeedQuery().SetID(feed.ID()).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("FeedList with soft deleted failed: %v", err)
 	}
@@ -464,7 +469,7 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	}
 
 	// 7. Test soft deleting nil feed
-	err = store.FeedSoftDelete(nil)
+	err = store.FeedSoftDelete(ctx, nil)
 	if err == nil {
 		t.Error("FeedSoftDelete should return error for nil feed")
 	}
@@ -474,17 +479,18 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_soft_delete_id", "link_soft_delete_id")
+	ctx := context.Background()
 
 	// 1. Create a feed
 	feed := NewFeed().SetName("FeedToSoftDeleteByID")
-	err := store.FeedCreate(feed)
+	err := store.FeedCreate(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedCreate failed: %v", err)
 	}
 	feedID := feed.ID()
 
 	// 2. Verify it exists and is not soft deleted
-	foundFeed, err := store.FeedFindByID(feedID)
+	foundFeed, err := store.FeedFindByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedFindByID before soft delete failed: %v", err)
 	}
@@ -493,13 +499,13 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	}
 
 	// 3. Soft delete using FeedSoftDeleteByID
-	err = store.FeedSoftDeleteByID(feedID)
+	err = store.FeedSoftDeleteByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedSoftDeleteByID failed: %v", err)
 	}
 
 	// 4. Verify it's not found by default FindByID
-	foundFeed, err = store.FeedFindByID(feedID)
+	foundFeed, err = store.FeedFindByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedFindByID after soft delete failed: %v", err)
 	}
@@ -508,7 +514,7 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	}
 
 	// 5. Verify it IS found when including soft deleted
-	list, err := store.FeedList(FeedQuery().SetID(feedID).SetWithSoftDeleted(true))
+	list, err := store.FeedList(ctx, FeedQuery().SetID(feedID).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("FeedList with soft deleted failed: %v", err)
 	}
@@ -520,7 +526,7 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	}
 
 	// 6. Test soft deleting non-existent ID
-	err = store.FeedSoftDeleteByID("non-existent-id")
+	err = store.FeedSoftDeleteByID(ctx, "non-existent-id")
 	// This case is tricky. FeedSoftDeleteByID calls FindByID first.
 	// If FindByID returns (nil, nil) for non-existent, then FeedSoftDelete(nil) is called, which errors.
 	// If FindByID returns (nil, error), then that error is returned.
@@ -532,7 +538,7 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	}
 
 	// 7. Test soft deleting with empty ID
-	err = store.FeedSoftDeleteByID("")
+	err = store.FeedSoftDeleteByID(ctx, "")
 	if err == nil {
 		t.Error("FeedSoftDeleteByID should return error for empty ID")
 	}
@@ -542,10 +548,11 @@ func TestStoreFeedUpdate(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_update", "link_update")
+	ctx := context.Background()
 
 	// 1. Create a feed
 	feed := NewFeed().SetName("Original Name").SetStatus(FEED_STATUS_INACTIVE)
-	err := store.FeedCreate(feed)
+	err := store.FeedCreate(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedCreate failed: %v", err)
 	}
@@ -562,7 +569,7 @@ func TestStoreFeedUpdate(t *testing.T) {
 
 	// 3. Update the feed in the store
 	time.Sleep(1 * time.Second) // Ensure UpdatedAt changes
-	err = store.FeedUpdate(feed)
+	err = store.FeedUpdate(ctx, feed)
 	if err != nil {
 		t.Fatalf("FeedUpdate failed: %v", err)
 	}
@@ -577,7 +584,7 @@ func TestStoreFeedUpdate(t *testing.T) {
 	updatedAtAfterUpdate := feed.UpdatedAt() // Store for next check
 
 	// 5. Retrieve the feed and verify changes
-	updatedFeed, err := store.FeedFindByID(feedID)
+	updatedFeed, err := store.FeedFindByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedFindByID after update failed: %v", err)
 	}
@@ -600,12 +607,12 @@ func TestStoreFeedUpdate(t *testing.T) {
 	// 6. Test updating with no changes
 	// updatedFeed was retrieved, MarkAsNotDirty was called implicitly by NewFeedFromExistingData
 	time.Sleep(1 * time.Second)
-	err = store.FeedUpdate(updatedFeed) // No fields changed since last MarkAsNotDirty
+	err = store.FeedUpdate(ctx, updatedFeed) // No fields changed since last MarkAsNotDirty
 	if err != nil {
 		t.Fatalf("Update with no changes should not error, but got: %v", err)
 	}
 	// Retrieve again to check if UpdatedAt changed in DB (it shouldn't if no query ran)
-	finalFeed, err := store.FeedFindByID(feedID)
+	finalFeed, err := store.FeedFindByID(ctx, feedID)
 	if err != nil {
 		t.Fatalf("FeedFindByID after no-change update failed: %v", err)
 	}
@@ -617,7 +624,7 @@ func TestStoreFeedUpdate(t *testing.T) {
 	}
 
 	// 7. Test updating nil feed
-	err = store.FeedUpdate(nil)
+	err = store.FeedUpdate(ctx, nil)
 	if err == nil {
 		t.Error("FeedUpdate should return error for nil feed")
 	}
@@ -629,9 +636,10 @@ func TestStoreLinkCount(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_count", "link_link_count")
+	ctx := context.Background()
 
 	// 0. Empty store should return 0
-	total, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
+	total, err := store.LinkCount(ctx, LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
 	if err != nil {
 		t.Fatalf("LinkCount on empty store failed: %v", err)
 	}
@@ -643,7 +651,7 @@ func TestStoreLinkCount(t *testing.T) {
 	feeds := []string{"feedA", "feedB"}
 	mk := func(title, status, feedID, url string) string {
 		l := NewLink().SetTitle(title).SetStatus(status).SetFeedID(feedID).SetURL(url)
-		if err := store.LinkCreate(l); err != nil {
+		if err := store.LinkCreate(ctx, l); err != nil {
 			t.Fatalf("LinkCreate failed: %v", err)
 		}
 		return l.ID()
@@ -659,7 +667,7 @@ func TestStoreLinkCount(t *testing.T) {
 	ids = append(ids, mk("I2", LINK_STATUS_INACTIVE, feeds[1], "http://i2"))
 
 	// 2. Count by status
-	totalActive, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
+	totalActive, err := store.LinkCount(ctx, LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
 	if err != nil {
 		t.Fatalf("LinkCount active failed: %v", err)
 	}
@@ -667,7 +675,7 @@ func TestStoreLinkCount(t *testing.T) {
 		t.Errorf("Expected 5 active, got %d", totalActive)
 	}
 
-	totalInactive, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_INACTIVE))
+	totalInactive, err := store.LinkCount(ctx, LinkQuery().SetStatus(LINK_STATUS_INACTIVE))
 	if err != nil {
 		t.Fatalf("LinkCount inactive failed: %v", err)
 	}
@@ -676,10 +684,10 @@ func TestStoreLinkCount(t *testing.T) {
 	}
 
 	// 3. Soft delete one active and verify default excludes it
-	if err := store.LinkSoftDeleteByID(ids[0]); err != nil {
+	if err := store.LinkSoftDeleteByID(ctx, ids[0]); err != nil {
 		t.Fatalf("LinkSoftDeleteByID failed: %v", err)
 	}
-	totalActiveAfterSD, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
+	totalActiveAfterSD, err := store.LinkCount(ctx, LinkQuery().SetStatus(LINK_STATUS_ACTIVE))
 	if err != nil {
 		t.Fatalf("LinkCount after soft delete failed: %v", err)
 	}
@@ -688,7 +696,7 @@ func TestStoreLinkCount(t *testing.T) {
 	}
 
 	// 4. Including soft-deleted should bring it back
-	totalActiveWithSD, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetWithSoftDeleted(true))
+	totalActiveWithSD, err := store.LinkCount(ctx, LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("LinkCount with soft deleted failed: %v", err)
 	}
@@ -697,7 +705,7 @@ func TestStoreLinkCount(t *testing.T) {
 	}
 
 	// 5. Filter by FeedID
-	totalFeedA, err := store.LinkCount(LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetFeedID(feeds[0]))
+	totalFeedA, err := store.LinkCount(ctx, LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetFeedID(feeds[0]))
 	if err != nil {
 		t.Fatalf("LinkCount by feed failed: %v", err)
 	}
@@ -709,16 +717,17 @@ func TestStoreLinkDelete(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_delete", "link_link_delete")
+	ctx := context.Background()
 
 	// 1. Create a link
 	link := NewLink().SetTitle("LinkToDelete").SetFeedID("feed1").SetURL("http://delete.me").SetStatus(LINK_STATUS_ACTIVE)
-	err := store.LinkCreate(link)
+	err := store.LinkCreate(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 
 	// 2. Verify it exists
-	foundLink, err := store.LinkFindByID(link.ID())
+	foundLink, err := store.LinkFindByID(ctx, link.ID())
 	if err != nil {
 		t.Fatalf("LinkFindByID before delete failed: %v", err)
 	}
@@ -727,13 +736,13 @@ func TestStoreLinkDelete(t *testing.T) {
 	}
 
 	// 3. Delete using LinkDelete
-	err = store.LinkDelete(link)
+	err = store.LinkDelete(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkDelete failed: %v", err)
 	}
 
 	// 4. Verify it's gone
-	foundLink, err = store.LinkFindByID(link.ID())
+	foundLink, err = store.LinkFindByID(ctx, link.ID())
 	if err != nil {
 		t.Fatalf("LinkFindByID after delete failed: %v", err)
 	}
@@ -742,13 +751,13 @@ func TestStoreLinkDelete(t *testing.T) {
 	}
 
 	// 5. Test deleting nil link
-	err = store.LinkDelete(nil)
+	err = store.LinkDelete(ctx, nil)
 	if err == nil {
 		t.Error("LinkDelete should return error for nil link")
 	}
 
 	// 6. Test deleting non-existent link (by ID)
-	err = store.LinkDeleteByID("non-existent-id")
+	err = store.LinkDeleteByID(ctx, "non-existent-id")
 	if err != nil {
 		t.Errorf("LinkDeleteByID for non-existent ID should not error (idempotent), but got: %v", err)
 	}
@@ -758,17 +767,18 @@ func TestStoreLinkDeleteByID(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_delete_id", "link_link_delete_id")
+	ctx := context.Background()
 
 	// 1. Create a link
 	link := NewLink().SetTitle("LinkToDeleteByID").SetFeedID("feed1").SetURL("http://delete.id").SetStatus(LINK_STATUS_ACTIVE)
-	err := store.LinkCreate(link)
+	err := store.LinkCreate(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 	linkID := link.ID()
 
 	// 2. Verify it exists
-	foundLink, err := store.LinkFindByID(linkID)
+	foundLink, err := store.LinkFindByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkFindByID before delete failed: %v", err)
 	}
@@ -777,13 +787,13 @@ func TestStoreLinkDeleteByID(t *testing.T) {
 	}
 
 	// 3. Delete using LinkDeleteByID
-	err = store.LinkDeleteByID(linkID)
+	err = store.LinkDeleteByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkDeleteByID failed: %v", err)
 	}
 
 	// 4. Verify it's gone
-	foundLink, err = store.LinkFindByID(linkID)
+	foundLink, err = store.LinkFindByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkFindByID after delete failed: %v", err)
 	}
@@ -792,7 +802,7 @@ func TestStoreLinkDeleteByID(t *testing.T) {
 	}
 
 	// 5. Test deleting with empty ID
-	err = store.LinkDeleteByID("")
+	err = store.LinkDeleteByID(ctx, "")
 	if err == nil {
 		t.Error("LinkDeleteByID should return error for empty ID")
 	}
@@ -835,6 +845,7 @@ func TestStoreLinkList(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_list", "link_link_list")
+	ctx := context.Background()
 
 	// Create test links
 	link1 := NewLink().SetTitle("Link 1").SetFeedID("feedA").SetStatus(LINK_STATUS_ACTIVE).SetURL("url1")
@@ -842,22 +853,22 @@ func TestStoreLinkList(t *testing.T) {
 	link3 := NewLink().SetTitle("Link 3").SetFeedID("feedA").SetStatus(LINK_STATUS_ACTIVE).SetURL("url3")
 	link4 := NewLink().SetTitle("Link 4").SetFeedID("feedC").SetStatus(LINK_STATUS_ACTIVE).SetURL("url4") // To be soft deleted
 
-	if err := store.LinkCreate(link1); err != nil {
+	if err := store.LinkCreate(ctx, link1); err != nil {
 		t.Fatalf("Failed to create link1: %v", err)
 	}
 	time.Sleep(1 * time.Second)
-	if err := store.LinkCreate(link2); err != nil {
+	if err := store.LinkCreate(ctx, link2); err != nil {
 		t.Fatalf("Failed to create link2: %v", err)
 	}
 	time.Sleep(1 * time.Second)
-	if err := store.LinkCreate(link3); err != nil {
+	if err := store.LinkCreate(ctx, link3); err != nil {
 		t.Fatalf("Failed to create link3: %v", err)
 	}
 	time.Sleep(1 * time.Second)
-	if err := store.LinkCreate(link4); err != nil {
+	if err := store.LinkCreate(ctx, link4); err != nil {
 		t.Fatalf("Failed to create link4: %v", err)
 	}
-	if err := store.LinkSoftDelete(link4); err != nil {
+	if err := store.LinkSoftDelete(ctx, link4); err != nil {
 		t.Fatalf("Failed to soft delete link4: %v", err)
 	} // Soft delete link4
 
@@ -928,7 +939,7 @@ func TestStoreLinkList(t *testing.T) {
 				}
 			}
 
-			links, err := store.LinkList(tc.query)
+			links, err := store.LinkList(ctx, tc.query)
 
 			if tc.expectError {
 				if err == nil {
@@ -965,16 +976,17 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_soft_delete", "link_link_soft_delete")
+	ctx := context.Background()
 
 	// 1. Create a link
 	link := NewLink().SetTitle("LinkToSoftDelete").SetFeedID("feed1").SetURL("http://softdel.me").SetStatus(LINK_STATUS_ACTIVE)
-	err := store.LinkCreate(link)
+	err := store.LinkCreate(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 
 	// 2. Verify it exists and is not soft deleted
-	foundLink, err := store.LinkFindByID(link.ID())
+	foundLink, err := store.LinkFindByID(ctx, link.ID())
 	if err != nil {
 		t.Fatalf("LinkFindByID before soft delete failed: %v", err)
 	}
@@ -986,7 +998,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 3. Soft delete using LinkSoftDelete
-	err = store.LinkSoftDelete(link)
+	err = store.LinkSoftDelete(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkSoftDelete failed: %v", err)
 	}
@@ -997,7 +1009,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 5. Verify it's not found by default FindByID
-	foundLink, err = store.LinkFindByID(link.ID())
+	foundLink, err = store.LinkFindByID(ctx, link.ID())
 	if err != nil {
 		t.Fatalf("LinkFindByID after soft delete failed: %v", err)
 	}
@@ -1006,7 +1018,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 6. Verify it IS found when including soft deleted
-	list, err := store.LinkList(LinkQuery().SetID(link.ID()).SetWithSoftDeleted(true))
+	list, err := store.LinkList(ctx, LinkQuery().SetID(link.ID()).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("LinkList with soft deleted failed: %v", err)
 	}
@@ -1018,7 +1030,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 7. Test soft deleting nil link
-	err = store.LinkSoftDelete(nil)
+	err = store.LinkSoftDelete(ctx, nil)
 	if err == nil {
 		t.Error("LinkSoftDelete should return error for nil link")
 	}
@@ -1028,17 +1040,18 @@ func TestStoreLinkSoftDeleteByID(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_soft_delete_id", "link_link_soft_delete_id")
+	ctx := context.Background()
 
 	// 1. Create a link
 	link := NewLink().SetTitle("LinkToSoftDeleteByID").SetFeedID("feed1").SetURL("http://softdel.id").SetStatus(LINK_STATUS_ACTIVE)
-	err := store.LinkCreate(link)
+	err := store.LinkCreate(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 	linkID := link.ID()
 
 	// 2. Verify it exists
-	foundLink, err := store.LinkFindByID(linkID)
+	foundLink, err := store.LinkFindByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkFindByID before soft delete failed: %v", err)
 	}
@@ -1047,13 +1060,13 @@ func TestStoreLinkSoftDeleteByID(t *testing.T) {
 	}
 
 	// 3. Soft delete using LinkSoftDeleteByID
-	err = store.LinkSoftDeleteByID(linkID)
+	err = store.LinkSoftDeleteByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkSoftDeleteByID failed: %v", err)
 	}
 
 	// 4. Verify it's not found by default FindByID
-	foundLink, err = store.LinkFindByID(linkID)
+	foundLink, err = store.LinkFindByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkFindByID after soft delete failed: %v", err)
 	}
@@ -1062,7 +1075,7 @@ func TestStoreLinkSoftDeleteByID(t *testing.T) {
 	}
 
 	// 5. Verify it IS found when including soft deleted
-	list, err := store.LinkList(LinkQuery().SetID(linkID).SetWithSoftDeleted(true))
+	list, err := store.LinkList(ctx, LinkQuery().SetID(linkID).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("LinkList with soft deleted failed: %v", err)
 	}
@@ -1075,13 +1088,13 @@ func TestStoreLinkSoftDeleteByID(t *testing.T) {
 
 	// 6. Test soft deleting non-existent ID
 	// Similar to FeedSoftDeleteByID, this will likely error because LinkSoftDelete(nil) is called.
-	err = store.LinkSoftDeleteByID("non-existent-id")
+	err = store.LinkSoftDeleteByID(ctx, "non-existent-id")
 	if err == nil {
 		t.Error("LinkSoftDeleteByID for non-existent ID should error (due to LinkSoftDelete(nil)), but got nil")
 	}
 
 	// 7. Test soft deleting with empty ID
-	err = store.LinkSoftDeleteByID("")
+	err = store.LinkSoftDeleteByID(ctx, "")
 	if err == nil {
 		t.Error("LinkSoftDeleteByID should return error for empty ID")
 	}
@@ -1091,10 +1104,11 @@ func TestStoreLinkUpdate(t *testing.T) {
 	db := initDB(":memory:")
 	defer db.Close()
 	store := createTestStore(t, db, "feed_link_update", "link_link_update")
+	ctx := context.Background()
 
 	// 1. Create a link
 	link := NewLink().SetTitle("Original Title").SetStatus(LINK_STATUS_INACTIVE).SetFeedID("feedX").SetURL("http://original.url")
-	err := store.LinkCreate(link)
+	err := store.LinkCreate(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
@@ -1111,7 +1125,7 @@ func TestStoreLinkUpdate(t *testing.T) {
 
 	// 3. Update the link in the store
 	time.Sleep(1 * time.Second)
-	err = store.LinkUpdate(link)
+	err = store.LinkUpdate(ctx, link)
 	if err != nil {
 		t.Fatalf("LinkUpdate failed: %v", err)
 	}
@@ -1126,7 +1140,7 @@ func TestStoreLinkUpdate(t *testing.T) {
 	updatedAtAfterUpdate := link.UpdatedAt() // Store for next check
 
 	// 5. Retrieve the link and verify changes
-	updatedLink, err := store.LinkFindByID(linkID)
+	updatedLink, err := store.LinkFindByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkFindByID after update failed: %v", err)
 	}
@@ -1148,12 +1162,12 @@ func TestStoreLinkUpdate(t *testing.T) {
 
 	// 6. Test updating with no changes
 	time.Sleep(1 * time.Second)
-	err = store.LinkUpdate(updatedLink) // No fields changed since last MarkAsNotDirty
+	err = store.LinkUpdate(ctx, updatedLink) // No fields changed since last MarkAsNotDirty
 	if err != nil {
 		t.Fatalf("Update with no changes should not error, but got: %v", err)
 	}
 	// Retrieve again to check DB
-	finalLink, err := store.LinkFindByID(linkID)
+	finalLink, err := store.LinkFindByID(ctx, linkID)
 	if err != nil {
 		t.Fatalf("LinkFindByID after no-change update failed: %v", err)
 	}
@@ -1165,7 +1179,7 @@ func TestStoreLinkUpdate(t *testing.T) {
 	}
 
 	// 7. Test updating nil link
-	err = store.LinkUpdate(nil)
+	err = store.LinkUpdate(ctx, nil)
 	if err == nil {
 		t.Error("LinkUpdate should return error for nil link")
 	}
