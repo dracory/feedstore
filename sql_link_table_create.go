@@ -2,8 +2,8 @@ package feedstore
 
 import "github.com/dracory/sb"
 
-func (st *storeImplementation) sqlLinkTableCreate() string {
-	sql := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
+func (st *storeImplementation) sqlLinkTableCreate() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
 		Table(st.linkTableName).
 		Column(sb.Column{
 			Name:       COLUMN_ID,
@@ -76,6 +76,6 @@ func (st *storeImplementation) sqlLinkTableCreate() string {
 		}).
 		CreateIfNotExists()
 
-	return sql
+	return sql, err
 
 }

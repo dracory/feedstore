@@ -5,8 +5,8 @@ import (
 )
 
 // sqlFeedTableCreate returns a SQL string for creating the Feed table
-func (st *storeImplementation) sqlFeedTableCreate() string {
-	sql := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
+func (st *storeImplementation) sqlFeedTableCreate() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
 		Table(st.feedTableName).
 		Column(sb.Column{
 			Name:       COLUMN_ID,
@@ -58,5 +58,5 @@ func (st *storeImplementation) sqlFeedTableCreate() string {
 		}).
 		CreateIfNotExists()
 
-	return sql
+	return sql, err
 }

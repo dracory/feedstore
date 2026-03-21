@@ -76,19 +76,27 @@ func (storeImplementation *storeImplementation) FeedCount(ctx context.Context, q
 
 // AutoMigrate auto migrate
 func (storeImplementation *storeImplementation) AutoMigrate() error {
-	sql := storeImplementation.sqlFeedTableCreate()
-
-	if sql == "" {
-		return errors.New("feed table create sql is empty")
-	}
-
-	_, err := storeImplementation.db.Exec(sql)
+	sql, err := storeImplementation.sqlFeedTableCreate()
 
 	if err != nil {
 		return err
 	}
 
-	sql = storeImplementation.sqlLinkTableCreate()
+	if sql == "" {
+		return errors.New("feed table create sql is empty")
+	}
+
+	_, err = storeImplementation.db.Exec(sql)
+
+	if err != nil {
+		return err
+	}
+
+	sql, err = storeImplementation.sqlLinkTableCreate()
+
+	if err != nil {
+		return err
+	}
 
 	if sql == "" {
 		return errors.New("link table create sql is empty")
