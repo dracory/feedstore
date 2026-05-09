@@ -217,3 +217,7 @@ func (link *linkImplementation) SetUpdatedAt(updatedAt string) LinkInterface {
 	link.Set(COLUMN_UPDATED_AT, updatedAt)
 	return link
 }
+
+func (link *linkImplementation) MarkAsNotDirty(columns ...string) {
+	link.DataObject.MarkAsNotDirty(columns...)
+}

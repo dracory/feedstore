@@ -5,7 +5,7 @@ import "github.com/dromara/carbon/v2"
 type FeedInterface interface {
 	Data() map[string]string
 	DataChanged() map[string]string
-	MarkAsNotDirty()
+	MarkAsNotDirty(...string)
 
 	CreatedAt() string
 	CreatedAtCarbon() *carbon.Carbon

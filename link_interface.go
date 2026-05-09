@@ -5,7 +5,7 @@ import "github.com/dromara/carbon/v2"
 type LinkInterface interface {
 	Data() map[string]string
 	DataChanged() map[string]string
-	MarkAsNotDirty()
+	MarkAsNotDirty(...string)
 
 	// Views() string
 	// SetViews(views string) LinkInterface

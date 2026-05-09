@@ -163,3 +163,7 @@ func (feed *feedImplementation) SetURL(url string) FeedInterface {
 	feed.Set(COLUMN_URL, url)
 	return feed
 }
+
+func (feed *feedImplementation) MarkAsNotDirty(columns ...string) {
+	feed.DataObject.MarkAsNotDirty(columns...)
+}
