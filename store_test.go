@@ -90,10 +90,10 @@ func TestStoreAutoMigrate(t *testing.T) {
 		t.Fatal("NewStore (with automigrate false) returned nil store")
 	}
 
-	// Run AutoMigrate
-	err = store.AutoMigrate()
+	// Run MigrateUp
+	err = store.MigrateUp(context.Background())
 	if err != nil {
-		t.Fatalf("AutoMigrate should not return an error, but got: %v", err)
+		t.Fatalf("MigrateUp should not return an error, but got: %v", err)
 	}
 
 	// Verify tables exist

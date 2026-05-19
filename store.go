@@ -74,8 +74,13 @@ func (storeImplementation *storeImplementation) FeedCount(ctx context.Context, q
 	return n, nil
 }
 
-// AutoMigrate auto migrate
-func (storeImplementation *storeImplementation) AutoMigrate() error {
+// MigrateUp creates the feed and link tables
+func (storeImplementation *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) error {
+	var txToUse *sql.Tx
+	if len(tx) > 0 {
+		txToUse = tx[0]
+	}
+
 	sql, err := storeImplementation.sqlFeedTableCreate()
 
 	if err != nil {
@@ -86,10 +91,14 @@ func (storeImplementation *storeImplementation) AutoMigrate() error {
 		return errors.New("feed table create sql is empty")
 	}
 
-	_, err = storeImplementation.db.Exec(sql)
-
-	if err != nil {
-		return err
+	var errExec error
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = storeImplementation.db.ExecContext(ctx, sql)
+	}
+	if errExec != nil {
+		return errExec
 	}
 
 	sql, err = storeImplementation.sqlLinkTableCreate()
@@ -102,10 +111,54 @@ func (storeImplementation *storeImplementation) AutoMigrate() error {
 		return errors.New("link table create sql is empty")
 	}
 
-	_, err = storeImplementation.db.Exec(sql)
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = storeImplementation.db.ExecContext(ctx, sql)
+	}
+	if errExec != nil {
+		return errExec
+	}
+
+	return nil
+}
+
+// MigrateDown drops the feed and link tables
+func (storeImplementation *storeImplementation) MigrateDown(ctx context.Context, tx ...*sql.Tx) error {
+	var txToUse *sql.Tx
+	if len(tx) > 0 {
+		txToUse = tx[0]
+	}
+
+	sql, err := storeImplementation.sqlFeedTableDrop()
 
 	if err != nil {
 		return err
+	}
+
+	var errExec error
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = storeImplementation.db.ExecContext(ctx, sql)
+	}
+	if errExec != nil {
+		return errExec
+	}
+
+	sql, err = storeImplementation.sqlLinkTableDrop()
+
+	if err != nil {
+		return err
+	}
+
+	if txToUse != nil {
+		_, errExec = txToUse.ExecContext(ctx, sql)
+	} else {
+		_, errExec = storeImplementation.db.ExecContext(ctx, sql)
+	}
+	if errExec != nil {
+		return errExec
 	}
 
 	return nil

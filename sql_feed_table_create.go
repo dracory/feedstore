@@ -60,3 +60,11 @@ func (st *storeImplementation) sqlFeedTableCreate() (string, error) {
 
 	return sql, err
 }
+
+// sqlFeedTableDrop returns a SQL string for dropping the Feed table
+func (st *storeImplementation) sqlFeedTableDrop() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
+		Table(st.feedTableName).
+		Drop()
+	return sql, err
+}

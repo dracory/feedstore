@@ -1,9 +1,16 @@
 package feedstore
 
-import "context"
+import (
+	"context"
+	"database/sql"
+)
 
 type StoreInterface interface {
-	AutoMigrate() error
+	// MigrateDown drops the feed and link tables
+	MigrateDown(ctx context.Context, tx ...*sql.Tx) error
+
+	// MigrateUp creates the feed and link tables
+	MigrateUp(ctx context.Context, tx ...*sql.Tx) error
 	EnableDebug(debug bool)
 
 	GetDriverName() string

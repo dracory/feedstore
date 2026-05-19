@@ -79,3 +79,11 @@ func (st *storeImplementation) sqlLinkTableCreate() (string, error) {
 	return sql, err
 
 }
+
+// sqlLinkTableDrop returns a SQL string for dropping the Link table
+func (st *storeImplementation) sqlLinkTableDrop() (string, error) {
+	sql, err := sb.NewBuilder(sb.DatabaseDriverName(st.db)).
+		Table(st.linkTableName).
+		Drop()
+	return sql, err
+}
