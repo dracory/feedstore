@@ -1,10 +1,13 @@
 package feedstore
 
-import "github.com/dromara/carbon/v2"
+import (
+	"time"
+
+	"github.com/dromara/carbon/v2"
+)
 
 type FeedInterface interface {
 	Data() map[string]string
-	DataChanged() map[string]string
 	MarkAsNotDirty(...string)
 
 	CreatedAt() string
@@ -17,13 +20,15 @@ type FeedInterface interface {
 	ID() string
 	SetID(id string) FeedInterface
 	LastFetchedAt() string
-	SetLastFetchedAt(lastFetchedAt string) FeedInterface
+	LastFetchedAtCarbon() *carbon.Carbon
+	SetLastFetchedAt(lastFetchedAt time.Time) FeedInterface
+	SetLastFetchedAtString(lastFetchedAt string) FeedInterface
 	Memo() string
 	SetMemo(memo string) FeedInterface
 	Name() string
 	SetName(name string) FeedInterface
-	SoftDeletedAt() string
-	SoftDeletedAtCarbon() *carbon.Carbon
+	GetSoftDeletedAt() string
+	GetSoftDeletedAtCarbon() *carbon.Carbon
 	SetSoftDeletedAt(softDeletedAt string) FeedInterface
 	Status() string
 	SetStatus(status string) FeedInterface

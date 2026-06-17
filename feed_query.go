@@ -2,11 +2,6 @@ package feedstore
 
 import (
 	"errors"
-	"strings"
-
-	"github.com/doug-martin/goqu/v9"
-	"github.com/dracory/sb"
-	"github.com/dromara/carbon/v2"
 )
 
 // feedQuery implements the FeedQueryInterface
@@ -112,122 +107,6 @@ func (q *feedQuery) Validate() error {
 	}
 
 	return nil
-}
-
-func (q *feedQuery) ToSelectDataset(st StoreInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
-	if st == nil {
-		return nil, []any{}, errors.New("store cannot be nil")
-	}
-
-	if err := q.Validate(); err != nil {
-		return nil, []any{}, err
-	}
-
-	sql := goqu.Dialect(st.GetDriverName()).From(st.GetFeedTableName())
-
-	// Created At filter
-	if q.IsCreatedAtGteSet() {
-		sql = sql.Where(goqu.C(COLUMN_CREATED_AT).Gte(q.GetCreatedAtGte()))
-	}
-
-	if q.IsCreatedAtLteSet() {
-		sql = sql.Where(goqu.C(COLUMN_CREATED_AT).Lte(q.GetCreatedAtLte()))
-	}
-
-	// ID filter
-	if q.IsIDSet() {
-		sql = sql.Where(goqu.C(COLUMN_ID).Eq(q.GetID()))
-	}
-
-	// ID IN filter
-	if q.IsIDInSet() {
-		sql = sql.Where(goqu.C(COLUMN_ID).In(q.GetIDIn()))
-	}
-
-	// Status filter
-	if q.IsStatusSet() {
-		sql = sql.Where(goqu.C(COLUMN_STATUS).Eq(q.GetStatus()))
-	}
-
-	// Status IN filter
-	if q.IsStatusInSet() {
-		sql = sql.Where(goqu.C(COLUMN_STATUS).In(q.GetStatusIn()))
-	}
-
-	// Updated At filter
-	if q.IsUpdatedAtGteSet() {
-		sql = sql.Where(goqu.C(COLUMN_UPDATED_AT).Gte(q.GetUpdatedAtGte()))
-	}
-
-	if q.IsUpdatedAtLteSet() {
-		sql = sql.Where(goqu.C(COLUMN_UPDATED_AT).Lte(q.GetUpdatedAtLte()))
-	}
-
-	if !q.IsCountOnlySet() {
-		if q.IsLimitSet() {
-			sql = sql.Limit(uint(q.GetLimit()))
-		}
-
-		if q.IsOffsetSet() {
-			sql = sql.Offset(uint(q.GetOffset()))
-		}
-	}
-
-	sortOrder := sb.DESC
-	if q.IsOrderDirectionSet() {
-		sortOrder = q.GetOrderDirection()
-	}
-
-	if q.IsOrderBySet() {
-		if strings.EqualFold(sortOrder, sb.ASC) {
-			sql = sql.Order(goqu.I(q.GetOrderBy()).Asc())
-		} else {
-			sql = sql.Order(goqu.I(q.GetOrderBy()).Desc())
-		}
-	}
-
-	// Limit (if count only is not set)
-	if !q.IsCountOnlySet() || !q.GetCountOnly() {
-		if q.IsLimitSet() {
-			sql = sql.Limit(uint(q.GetLimit()))
-		}
-
-		if q.IsOffsetSet() {
-			sql = sql.Offset(uint(q.GetOffset()))
-		}
-	}
-
-	// Sort order
-	if q.IsOrderBySet() {
-		sortOrder := q.GetOrderDirection()
-
-		if strings.EqualFold(sortOrder, sb.ASC) {
-			sql = sql.Order(goqu.I(q.GetOrderBy()).Asc())
-		} else {
-			sql = sql.Order(goqu.I(q.GetOrderBy()).Desc())
-		}
-	}
-
-	// Soft delete filters
-
-	// Only soft deleted
-	if q.IsOnlySoftDeletedSet() && q.GetOnlySoftDeleted() {
-		sql = sql.Where(goqu.C(COLUMN_SOFT_DELETED_AT).Lte(carbon.Now(carbon.UTC).ToDateTimeString()))
-		return sql, []any{}, nil
-	}
-
-	// Include soft deleted
-	if q.IsWithSoftDeletedSet() && q.GetWithSoftDeleted() {
-		return sql, []any{}, nil
-	}
-
-	// Exclude soft deleted, not in the past (default)
-	softDeleted := goqu.C(COLUMN_SOFT_DELETED_AT).
-		Gt(carbon.Now(carbon.UTC).ToDateTimeString())
-
-	sql = sql.Where(softDeleted)
-
-	return sql, []any{}, nil
 }
 
 // ============================================================================
@@ -502,42 +381,6 @@ func (q *feedQuery) SetStatusIn(statusIn []string) FeedQueryInterface {
 	return q
 }
 
-func (q *feedQuery) IsUpdatedAtGteSet() bool {
-	return q.isUpdatedAtGteSet
-}
-
-func (q *feedQuery) GetUpdatedAtGte() string {
-	if q.IsUpdatedAtGteSet() {
-		return q.updatedAtGte
-	}
-
-	return ""
-}
-
-func (q *feedQuery) SetUpdatedAtGte(updatedAt string) FeedQueryInterface {
-	q.isUpdatedAtGteSet = true
-	q.updatedAtGte = updatedAt
-	return q
-}
-
-func (q *feedQuery) IsUpdatedAtLteSet() bool {
-	return q.isUpdatedAtLteSet
-}
-
-func (q *feedQuery) GetUpdatedAtLte() string {
-	if q.IsUpdatedAtLteSet() {
-		return q.updatedAtLte
-	}
-
-	return ""
-}
-
-func (q *feedQuery) SetUpdatedAtLte(updatedAt string) FeedQueryInterface {
-	q.isUpdatedAtLteSet = true
-	q.updatedAtLte = updatedAt
-	return q
-}
-
 func (q *feedQuery) IsWithSoftDeletedSet() bool {
 	return q.isWithSoftDeletedSet
 }
@@ -553,5 +396,41 @@ func (q *feedQuery) GetWithSoftDeleted() bool {
 func (q *feedQuery) SetWithSoftDeleted(withSoftDeleted bool) FeedQueryInterface {
 	q.isWithSoftDeletedSet = true
 	q.withSoftDeleted = withSoftDeleted
+	return q
+}
+
+func (q *feedQuery) IsUpdatedAtGteSet() bool {
+	return q.isUpdatedAtGteSet
+}
+
+func (q *feedQuery) GetUpdatedAtGte() string {
+	if q.IsUpdatedAtGteSet() {
+		return q.updatedAtGte
+	}
+
+	return ""
+}
+
+func (q *feedQuery) SetUpdatedAtGte(updatedAtGte string) FeedQueryInterface {
+	q.isUpdatedAtGteSet = true
+	q.updatedAtGte = updatedAtGte
+	return q
+}
+
+func (q *feedQuery) IsUpdatedAtLteSet() bool {
+	return q.isUpdatedAtLteSet
+}
+
+func (q *feedQuery) GetUpdatedAtLte() string {
+	if q.IsUpdatedAtLteSet() {
+		return q.updatedAtLte
+	}
+
+	return ""
+}
+
+func (q *feedQuery) SetUpdatedAtLte(updatedAtLte string) FeedQueryInterface {
+	q.isUpdatedAtLteSet = true
+	q.updatedAtLte = updatedAtLte
 	return q
 }

@@ -12,7 +12,6 @@ import (
 
 	"github.com/dracory/sb"
 	"github.com/dromara/carbon/v2"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -147,9 +146,7 @@ func TestStoreGetters(t *testing.T) {
 	linkTable := "link_getters"
 	store := createTestStore(t, db, feedTable, linkTable)
 
-	if store.GetDriverName() != "sqlite" {
-		t.Errorf("GetDriverName: expected 'sqlite', got '%s'", store.GetDriverName())
-	}
+	// GetDriverName() method removed from StoreInterface - test skipped
 	if store.GetFeedTableName() != feedTable {
 		t.Errorf("GetFeedTableName: expected '%s', got '%s'", feedTable, store.GetFeedTableName())
 	}
@@ -428,8 +425,8 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 		t.Fatal("Feed not found before soft delete")
 	}
 	// Check if SoftDeletedAt is in the future (or MAX_DATETIME)
-	if !foundFeed.SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("SoftDeletedAt should be in the future initially, but was %s", foundFeed.SoftDeletedAt())
+	if !foundFeed.GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("SoftDeletedAt should be in the future initially, but was %s", foundFeed.GetSoftDeletedAtCarbon())
 	}
 
 	// 3. Soft delete using FeedSoftDelete
@@ -440,8 +437,8 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	}
 
 	// 4. Verify it's marked as deleted in the object (check internal state)
-	if feed.SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("SoftDeletedAt should be in the past after soft delete in object, but was %s", feed.SoftDeletedAt())
+	if feed.GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("SoftDeletedAt should be in the past after soft delete in object, but was %s", feed.GetSoftDeletedAtCarbon())
 	}
 	if initialUpdatedAt == feed.UpdatedAt() {
 		t.Error("UpdatedAt should have changed after soft delete")
@@ -464,8 +461,8 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	if len(list) != 1 {
 		t.Fatalf("Feed should be found when including soft deleted, expected 1 got %d", len(list))
 	}
-	if list[0].SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("Found feed's SoftDeletedAt should be in the past, but was %s", list[0].SoftDeletedAt())
+	if list[0].GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("Found feed's SoftDeletedAt should be in the past, but was %s", list[0].GetSoftDeletedAt())
 	}
 
 	// 7. Test soft deleting nil feed
@@ -521,8 +518,8 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	if len(list) != 1 {
 		t.Fatalf("Feed should be found when including soft deleted, expected 1 got %d", len(list))
 	}
-	if list[0].SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("Found feed's SoftDeletedAt should be in the past, but was %s", list[0].SoftDeletedAt())
+	if list[0].GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("Found feed's SoftDeletedAt should be in the past, but was %s", list[0].GetSoftDeletedAt())
 	}
 
 	// 6. Test soft deleting non-existent ID
@@ -575,9 +572,7 @@ func TestStoreFeedUpdate(t *testing.T) {
 	}
 
 	// 4. Verify the object is marked as not dirty
-	if len(feed.DataChanged()) != 0 {
-		t.Errorf("DataChanged should be empty after successful update, but got %v", feed.DataChanged())
-	}
+	// DataChanged() method not available in neat ORM - test skipped
 	if initialUpdatedAt == feed.UpdatedAt() {
 		t.Error("UpdatedAt should have changed after update")
 	}
@@ -993,8 +988,8 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	if foundLink == nil {
 		t.Fatal("Link not found before soft delete")
 	}
-	if !foundLink.SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("SoftDeletedAt should be in the future initially, but was %s", foundLink.SoftDeletedAt())
+	if !foundLink.GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("SoftDeletedAt should be in the future initially, but was %s", foundLink.GetSoftDeletedAt())
 	}
 
 	// 3. Soft delete using LinkSoftDelete
@@ -1004,8 +999,8 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 4. Verify it's marked as deleted in the object
-	if link.SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("SoftDeletedAt should be in the past after soft delete in object, but was %s", link.SoftDeletedAt())
+	if link.GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("SoftDeletedAt should be in the past after soft delete in object, but was %s", link.GetSoftDeletedAt())
 	}
 
 	// 5. Verify it's not found by default FindByID
@@ -1025,8 +1020,8 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	if len(list) != 1 {
 		t.Fatalf("Link should be found when including soft deleted, expected 1 got %d", len(list))
 	}
-	if list[0].SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("Found link's SoftDeletedAt should be in the past, but was %s", list[0].SoftDeletedAt())
+	if list[0].GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("Found link's SoftDeletedAt should be in the past, but was %s", list[0].GetSoftDeletedAt())
 	}
 
 	// 7. Test soft deleting nil link
@@ -1082,8 +1077,8 @@ func TestStoreLinkSoftDeleteByID(t *testing.T) {
 	if len(list) != 1 {
 		t.Fatalf("Link should be found when including soft deleted, expected 1 got %d", len(list))
 	}
-	if list[0].SoftDeletedAtCarbon().Gt(carbon.Now()) {
-		t.Errorf("Found link's SoftDeletedAt should be in the past, but was %s", list[0].SoftDeletedAt())
+	if list[0].GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
+		t.Errorf("Found link's SoftDeletedAt should be in the past, but was %s", list[0].GetSoftDeletedAt())
 	}
 
 	// 6. Test soft deleting non-existent ID
@@ -1131,9 +1126,7 @@ func TestStoreLinkUpdate(t *testing.T) {
 	}
 
 	// 4. Verify the object is marked as not dirty
-	if len(link.DataChanged()) != 0 {
-		t.Errorf("DataChanged should be empty after successful update, but got %v", link.DataChanged())
-	}
+	// DataChanged() method not available in neat ORM - test skipped
 	if initialUpdatedAt == link.UpdatedAt() {
 		t.Error("UpdatedAt should have changed after update")
 	}

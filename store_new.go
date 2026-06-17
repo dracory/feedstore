@@ -4,21 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
+	"os"
 
-	"github.com/dracory/sb"
+	"github.com/dracory/neat"
 )
 
-// NewStoreOptions define the options for creating a new block store
+// NewStoreOptions define the options for creating a new feed store
 type NewStoreOptions struct {
 	FeedTableName      string
 	LinkTableName      string
 	DB                 *sql.DB
-	DbDriverName       string
 	AutomigrateEnabled bool
 	DebugEnabled       bool
 }
 
-// NewStore creates a new block store
+// NewStore creates a new feed store
 func NewStore(opts NewStoreOptions) (StoreInterface, error) {
 	if opts.FeedTableName == "" {
 		return nil, errors.New("feed store: FeedTableName is required")
@@ -32,17 +33,19 @@ func NewStore(opts NewStoreOptions) (StoreInterface, error) {
 		return nil, errors.New("feed store: DB is required")
 	}
 
-	if opts.DbDriverName == "" {
-		opts.DbDriverName = sb.DatabaseDriverName(opts.DB)
+	neatDB, err := neat.NewFromSQLDB(opts.DB)
+	if err != nil {
+		return nil, err
 	}
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	store := &storeImplementation{
 		feedTableName:      opts.FeedTableName,
 		linkTableName:      opts.LinkTableName,
 		automigrateEnabled: opts.AutomigrateEnabled,
-		db:                 opts.DB,
-		dbDriverName:       opts.DbDriverName,
+		db:                 neatDB,
 		debugEnabled:       opts.DebugEnabled,
+		logger:             logger,
 	}
 
 	if store.automigrateEnabled {

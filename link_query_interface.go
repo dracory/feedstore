@@ -1,7 +1,5 @@
 package feedstore
 
-import "github.com/doug-martin/goqu/v9"
-
 // LinkQueryInterface defines the interface for querying links
 type LinkQueryInterface interface {
 	// Validation method
@@ -20,9 +18,6 @@ type LinkQueryInterface interface {
 	IsOnlySoftDeletedSet() bool
 	GetOnlySoftDeleted() bool
 	SetOnlySoftDeleted(onlySoftDeleted bool) LinkQueryInterface
-
-	// Dataset conversion methods
-	ToSelectDataset(store StoreInterface) (selectDataset *goqu.SelectDataset, columns []any, err error)
 
 	// Field query methods
 
@@ -65,6 +60,9 @@ type LinkQueryInterface interface {
 	IsStatusSet() bool
 	GetStatus() string
 	SetStatus(status string) LinkQueryInterface
+
+	IsStatusInSet() bool
+	GetStatusIn() []string
 	SetStatusIn(statuses []string) LinkQueryInterface
 
 	IsURLSet() bool
@@ -78,4 +76,9 @@ type LinkQueryInterface interface {
 	IsUpdatedAtLteSet() bool
 	GetUpdatedAtLte() string
 	SetUpdatedAtLte(updatedAt string) LinkQueryInterface
+
+	// Owner ID (legacy, kept for compatibility)
+	IsOwnerIDSet() bool
+	GetOwnerID() string
+	SetOwnerID(ownerID string) LinkQueryInterface
 }

@@ -1,7 +1,5 @@
 package feedstore
 
-import "github.com/doug-martin/goqu/v9"
-
 // FeedQueryInterface defines the interface for querying feeds
 type FeedQueryInterface interface {
 	// Validation method
@@ -20,9 +18,6 @@ type FeedQueryInterface interface {
 	IsOnlySoftDeletedSet() bool
 	GetOnlySoftDeleted() bool
 	SetOnlySoftDeleted(onlySoftDeleted bool) FeedQueryInterface
-
-	// Dataset conversion methods
-	ToSelectDataset(store StoreInterface) (selectDataset *goqu.SelectDataset, columns []any, err error)
 
 	// Field query methods
 
@@ -69,6 +64,9 @@ type FeedQueryInterface interface {
 	IsStatusSet() bool
 	GetStatus() string
 	SetStatus(status string) FeedQueryInterface
+
+	IsStatusInSet() bool
+	GetStatusIn() []string
 	SetStatusIn(statuses []string) FeedQueryInterface
 
 	IsUpdatedAtGteSet() bool
@@ -78,4 +76,9 @@ type FeedQueryInterface interface {
 	IsUpdatedAtLteSet() bool
 	GetUpdatedAtLte() string
 	SetUpdatedAtLte(updatedAt string) FeedQueryInterface
+
+	// Owner ID (legacy, kept for compatibility)
+	IsOwnerIDSet() bool
+	GetOwnerID() string
+	SetOwnerID(ownerID string) FeedQueryInterface
 }

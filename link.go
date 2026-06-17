@@ -1,9 +1,11 @@
 package feedstore
 
 import (
-	"github.com/dracory/dataobject"
-	"github.com/dracory/sb"
-	"github.com/dracory/uid"
+	"time"
+
+	"github.com/dracory/neat/database/orm"
+	"github.com/dracory/neat/database/soft_delete"
+	neatuid "github.com/dracory/neat/support/uid"
 	"github.com/dromara/carbon/v2"
 )
 
@@ -12,14 +14,30 @@ import (
 // ============================================================================
 
 type linkImplementation struct {
-	dataobject.DataObject
+	orm.ShortID
+
+	FeedIDField      string    `db:"feed_id"`
+	StatusField      string    `db:"status"`
+	TitleField       string    `db:"title"`
+	DescriptionField string    `db:"description"`
+	URLField         string    `db:"url"`
+	ViewsField       string    `db:"views"`
+	VotesUpField     string    `db:"votes_up"`
+	VotesDownField   string    `db:"votes_down"`
+	ReportedAtField  time.Time `db:"reported_at"`
+	ReportField      string    `db:"report"`
+	CheckedAtField   time.Time `db:"checked_at"`
+	TimeField        time.Time `db:"time"`
+	CreatedAtField   orm.CreatedAt
+	UpdatedAtField   orm.UpdatedAt
+	soft_delete.SoftDeletesMaxDate
 }
 
 // ============================================================================
 // == INTERFACE
 // ============================================================================
 
-var _ LinkInterface = (*linkImplementation)(nil) // verify it extends the interface
+var _ LinkInterface = (*linkImplementation)(nil)
 
 // ============================================================================
 // == CONSTRUCTOR
@@ -27,33 +45,52 @@ var _ LinkInterface = (*linkImplementation)(nil) // verify it extends the interf
 
 func NewLink() *linkImplementation {
 	link := &linkImplementation{}
-	link.SetID(uid.NanoUid())
-	// link.SetStatus(LINK_STATUS_INACTIVE)
-	// link.SetTitle("")
+	link.SetID(neatuid.GenerateShortID())
 	link.SetDescription("")
-	// link.SetURL("")
-	// link.SetFeedID("") // required
 	link.SetViews("0")
 	link.SetVotesUp("0")
 	link.SetVotesDown("0")
-	link.SetReportedAt(sb.NULL_DATETIME)
+	link.SetReportedAt(time.Time{})
 	link.SetReport("")
-	link.SetCheckedAt(sb.NULL_DATETIME)
-	link.SetTime(sb.NULL_DATETIME)
+	link.SetCheckedAt(time.Time{})
+	link.SetTime(time.Time{})
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	link.SetSoftDeletedAt(sb.MAX_DATETIME)
+	link.SetSoftDeletedAt(MAX_DATETIME)
 	return link
 }
 
 func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 	link := &linkImplementation{}
 
-	for k, v := range data {
-		link.Set(k, v)
+	link.SetID(data[COLUMN_ID])
+	link.SetFeedID(data[COLUMN_FEED_ID])
+	link.SetStatus(data[COLUMN_STATUS])
+	link.SetTitle(data[COLUMN_TITLE])
+	link.SetDescription(data[COLUMN_DESCRIPTION])
+	link.SetURL(data[COLUMN_URL])
+	link.SetViews(data[COLUMN_VIEWS])
+	link.SetVotesUp(data[COLUMN_VOTES_UP])
+	link.SetVotesDown(data[COLUMN_VOTES_DOWN])
+	if v, ok := data[COLUMN_REPORTED_AT]; ok {
+		link.SetReportedAtString(v)
 	}
-
-	link.MarkAsNotDirty()
+	link.SetReport(data[COLUMN_REPORT])
+	if v, ok := data[COLUMN_CHECKED_AT]; ok {
+		link.SetCheckedAtString(v)
+	}
+	if v, ok := data[COLUMN_TIME]; ok {
+		link.SetTimeString(v)
+	}
+	if v, ok := data[COLUMN_CREATED_AT]; ok {
+		link.SetCreatedAt(v)
+	}
+	if v, ok := data[COLUMN_UPDATED_AT]; ok {
+		link.SetUpdatedAt(v)
+	}
+	if v, ok := data[COLUMN_SOFT_DELETED_AT]; ok {
+		link.SetSoftDeletedAt(v)
+	}
 
 	return link
 }
@@ -61,163 +98,248 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 // == SETTERS AND GETTERS =====================================================
 
 func (link *linkImplementation) CheckedAt() string {
-	return link.Get(COLUMN_CHECKED_AT)
+	if link.CheckedAtField.IsZero() {
+		return ""
+	}
+	return carbon.CreateFromStdTime(link.CheckedAtField).ToDateTimeString()
 }
 
-func (link *linkImplementation) SetCheckedAt(timeChecked string) LinkInterface {
-	link.Set(COLUMN_CHECKED_AT, timeChecked)
+func (link *linkImplementation) CheckedAtCarbon() *carbon.Carbon {
+	return carbon.CreateFromStdTime(link.CheckedAtField)
+}
+
+func (link *linkImplementation) SetCheckedAt(timeChecked time.Time) LinkInterface {
+	link.CheckedAtField = timeChecked
+	return link
+}
+
+func (link *linkImplementation) SetCheckedAtString(timeChecked string) LinkInterface {
+	if timeChecked == "" {
+		link.CheckedAtField = time.Time{}
+		return link
+	}
+	link.CheckedAtField = carbon.Parse(timeChecked, carbon.UTC).StdTime()
 	return link
 }
 
 func (link *linkImplementation) CreatedAt() string {
-	return link.Get(COLUMN_CREATED_AT)
+	if link.CreatedAtField.CreatedAt.IsZero() {
+		return ""
+	}
+	return carbon.CreateFromStdTime(link.CreatedAtField.CreatedAt).ToDateTimeString()
 }
 
 func (link *linkImplementation) CreatedAtCarbon() *carbon.Carbon {
-	return carbon.Parse(link.CreatedAt())
+	return carbon.CreateFromStdTime(link.CreatedAtField.CreatedAt)
 }
 
 func (link *linkImplementation) SetCreatedAt(createdAt string) LinkInterface {
-	link.Set(COLUMN_CREATED_AT, createdAt)
+	if createdAt == "" {
+		return link
+	}
+	link.CreatedAtField.CreatedAt = carbon.Parse(createdAt, carbon.UTC).StdTime()
 	return link
 }
 
 func (link *linkImplementation) Description() string {
-	return link.Get(COLUMN_DESCRIPTION)
+	return link.DescriptionField
 }
 
 func (link *linkImplementation) SetDescription(description string) LinkInterface {
-	link.Set(COLUMN_DESCRIPTION, description)
+	link.DescriptionField = description
 	return link
 }
 
 func (link *linkImplementation) FeedID() string {
-	return link.Get(COLUMN_FEED_ID)
+	return link.FeedIDField
 }
 
 func (link *linkImplementation) SetFeedID(feedID string) LinkInterface {
-	link.Set(COLUMN_FEED_ID, feedID)
+	link.FeedIDField = feedID
 	return link
 }
 
 func (link *linkImplementation) ID() string {
-	return link.Get(COLUMN_ID)
+	return link.ShortID.ID
 }
 
 func (link *linkImplementation) SetID(id string) LinkInterface {
-	link.Set(COLUMN_ID, id)
+	link.ShortID.ID = id
 	return link
 }
 
 func (link *linkImplementation) Status() string {
-	return link.Get(COLUMN_STATUS)
+	return link.StatusField
 }
 
 func (link *linkImplementation) SetStatus(status string) LinkInterface {
-	link.Set(COLUMN_STATUS, status)
+	link.StatusField = status
 	return link
 }
 
 func (link *linkImplementation) Title() string {
-	return link.Get(COLUMN_TITLE)
+	return link.TitleField
 }
 
 func (link *linkImplementation) SetTitle(title string) LinkInterface {
-	link.Set(COLUMN_TITLE, title)
+	link.TitleField = title
 	return link
 }
 
 func (link *linkImplementation) URL() string {
-	return link.Get(COLUMN_URL)
+	return link.URLField
 }
 
 func (link *linkImplementation) SetURL(url string) LinkInterface {
-	link.Set(COLUMN_URL, url)
+	link.URLField = url
 	return link
 }
 
 func (link *linkImplementation) VotesDown() string {
-	return link.Get(COLUMN_VOTES_DOWN)
+	return link.VotesDownField
 }
 
 func (link *linkImplementation) SetVotesDown(votesDown string) LinkInterface {
-	link.Set(COLUMN_VOTES_DOWN, votesDown)
+	link.VotesDownField = votesDown
 	return link
 }
 
 func (link *linkImplementation) VotesUp() string {
-	return link.Get(COLUMN_VOTES_UP)
+	return link.VotesUpField
 }
 
 func (link *linkImplementation) SetVotesUp(votesUp string) LinkInterface {
-	link.Set(COLUMN_VOTES_UP, votesUp)
+	link.VotesUpField = votesUp
 	return link
+}
+
+func (link *linkImplementation) Views() string {
+	return link.ViewsField
 }
 
 func (link *linkImplementation) SetViews(views string) LinkInterface {
-	link.Set(COLUMN_VIEWS, views)
+	link.ViewsField = views
 	return link
 }
+
 func (link *linkImplementation) Report() string {
-	return link.Get(COLUMN_REPORT)
+	return link.ReportField
 }
 
 func (link *linkImplementation) SetReport(report string) LinkInterface {
-	link.Set(COLUMN_REPORT, report)
+	link.ReportField = report
 	return link
 }
 
 func (link *linkImplementation) ReportedAt() string {
-	return link.Get(COLUMN_REPORTED_AT)
+	if link.ReportedAtField.IsZero() {
+		return ""
+	}
+	return carbon.CreateFromStdTime(link.ReportedAtField).ToDateTimeString()
 }
 
 func (link *linkImplementation) ReportedAtCarbon() *carbon.Carbon {
-	return carbon.Parse(link.ReportedAt())
+	return carbon.CreateFromStdTime(link.ReportedAtField)
 }
 
-func (link *linkImplementation) SetReportedAt(reportedAt string) LinkInterface {
-	link.Set(COLUMN_REPORTED_AT, reportedAt)
+func (link *linkImplementation) SetReportedAt(reportedAt time.Time) LinkInterface {
+	link.ReportedAtField = reportedAt
+	return link
+}
+
+func (link *linkImplementation) SetReportedAtString(reportedAt string) LinkInterface {
+	if reportedAt == "" {
+		link.ReportedAtField = time.Time{}
+		return link
+	}
+	link.ReportedAtField = carbon.Parse(reportedAt, carbon.UTC).StdTime()
 	return link
 }
 
 func (link *linkImplementation) Time() string {
-	return link.Get(COLUMN_TIME)
+	if link.TimeField.IsZero() {
+		return ""
+	}
+	return carbon.CreateFromStdTime(link.TimeField).ToDateTimeString()
 }
 
 func (link *linkImplementation) TimeCarbon() *carbon.Carbon {
-	return carbon.Parse(link.Time())
+	return carbon.CreateFromStdTime(link.TimeField)
 }
 
-func (link *linkImplementation) SetTime(time string) LinkInterface {
-	link.Set(COLUMN_TIME, time)
+func (link *linkImplementation) SetTime(time time.Time) LinkInterface {
+	link.TimeField = time
 	return link
 }
 
-func (link *linkImplementation) SoftDeletedAt() string {
-	return link.Get(COLUMN_SOFT_DELETED_AT)
+func (link *linkImplementation) SetTimeString(timeStr string) LinkInterface {
+	if timeStr == "" {
+		link.TimeField = time.Time{}
+		return link
+	}
+	link.TimeField = carbon.Parse(timeStr, carbon.UTC).StdTime()
+	return link
 }
-func (link *linkImplementation) SoftDeletedAtCarbon() *carbon.Carbon {
-	return carbon.Parse(link.SoftDeletedAt())
+
+func (link *linkImplementation) GetSoftDeletedAt() string {
+	if link.SoftDeletedAt.IsZero() {
+		return ""
+	}
+	return carbon.CreateFromStdTime(link.SoftDeletedAt).ToDateTimeString()
+}
+func (link *linkImplementation) GetSoftDeletedAtCarbon() *carbon.Carbon {
+	return carbon.CreateFromStdTime(link.SoftDeletedAt)
 }
 
 func (link *linkImplementation) SetSoftDeletedAt(softDeletedAt string) LinkInterface {
-	link.Set(COLUMN_SOFT_DELETED_AT, softDeletedAt)
+	if softDeletedAt == "" {
+		link.SoftDeletedAt = time.Time{}
+		return link
+	}
+	link.SoftDeletedAt = carbon.Parse(softDeletedAt, carbon.UTC).StdTime()
 	return link
 }
 
 func (link *linkImplementation) UpdatedAt() string {
-	return link.Get(COLUMN_UPDATED_AT)
+	if link.UpdatedAtField.UpdatedAt.IsZero() {
+		return ""
+	}
+	return carbon.CreateFromStdTime(link.UpdatedAtField.UpdatedAt).ToDateTimeString()
 }
 
 func (link *linkImplementation) UpdatedAtCarbon() *carbon.Carbon {
-	return carbon.Parse(link.UpdatedAt())
+	return carbon.CreateFromStdTime(link.UpdatedAtField.UpdatedAt)
 }
 
 func (link *linkImplementation) SetUpdatedAt(updatedAt string) LinkInterface {
-	link.Set(COLUMN_UPDATED_AT, updatedAt)
+	if updatedAt == "" {
+		return link
+	}
+	link.UpdatedAtField.UpdatedAt = carbon.Parse(updatedAt, carbon.UTC).StdTime()
 	return link
 }
 
+func (link *linkImplementation) Data() map[string]string {
+	data := map[string]string{}
+	data[COLUMN_ID] = link.ID()
+	data[COLUMN_FEED_ID] = link.FeedID()
+	data[COLUMN_STATUS] = link.Status()
+	data[COLUMN_TITLE] = link.Title()
+	data[COLUMN_DESCRIPTION] = link.Description()
+	data[COLUMN_URL] = link.URL()
+	data[COLUMN_VIEWS] = link.Views()
+	data[COLUMN_VOTES_UP] = link.VotesUp()
+	data[COLUMN_VOTES_DOWN] = link.VotesDown()
+	data[COLUMN_REPORTED_AT] = link.ReportedAt()
+	data[COLUMN_REPORT] = link.Report()
+	data[COLUMN_CHECKED_AT] = link.CheckedAt()
+	data[COLUMN_TIME] = link.Time()
+	data[COLUMN_CREATED_AT] = link.CreatedAt()
+	data[COLUMN_UPDATED_AT] = link.UpdatedAt()
+	data[COLUMN_SOFT_DELETED_AT] = link.GetSoftDeletedAt()
+	return data
+}
+
 func (link *linkImplementation) MarkAsNotDirty(columns ...string) {
-	link.DataObject.MarkAsNotDirty(columns...)
+	// No-op for neat ORM
 }

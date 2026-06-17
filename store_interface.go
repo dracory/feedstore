@@ -13,7 +13,7 @@ type StoreInterface interface {
 	MigrateUp(ctx context.Context, tx ...*sql.Tx) error
 	EnableDebug(debug bool)
 
-	GetDriverName() string
+	GetDB() *sql.DB
 	GetFeedTableName() string
 	GetLinkTableName() string
 
