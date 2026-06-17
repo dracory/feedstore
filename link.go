@@ -31,6 +31,8 @@ type linkImplementation struct {
 	CreatedAtField   orm.CreatedAt
 	UpdatedAtField   orm.UpdatedAt
 	soft_delete.SoftDeletesMaxDate
+
+	originalData map[string]string
 }
 
 // ============================================================================
@@ -57,6 +59,7 @@ func NewLink() *linkImplementation {
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetSoftDeletedAt(MAX_DATETIME)
+	link.MarkAsNotDirty()
 	return link
 }
 
@@ -91,6 +94,7 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 	if v, ok := data[COLUMN_SOFT_DELETED_AT]; ok {
 		link.SetSoftDeletedAt(v)
 	}
+	link.MarkAsNotDirty()
 
 	return link
 }
@@ -341,5 +345,5 @@ func (link *linkImplementation) Data() map[string]string {
 }
 
 func (link *linkImplementation) MarkAsNotDirty(columns ...string) {
-	// No-op for neat ORM
+	link.originalData = link.Data()
 }

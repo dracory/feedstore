@@ -27,6 +27,8 @@ type feedImplementation struct {
 	CreatedAtField     orm.CreatedAt
 	UpdatedAtField     orm.UpdatedAt
 	soft_delete.SoftDeletesMaxDate
+
+	originalData map[string]string
 }
 
 // ============================================================================
@@ -51,6 +53,7 @@ func NewFeed() *feedImplementation {
 	feed.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	feed.SetSoftDeletedAt(MAX_DATETIME)
+	feed.MarkAsNotDirty()
 
 	return feed
 }
@@ -77,6 +80,7 @@ func NewFeedFromExistingData(data map[string]string) *feedImplementation {
 	if v, ok := data[COLUMN_SOFT_DELETED_AT]; ok {
 		feed.SetSoftDeletedAt(v)
 	}
+	feed.MarkAsNotDirty()
 
 	return feed
 }
@@ -243,5 +247,7 @@ func (feed *feedImplementation) Data() map[string]string {
 }
 
 func (feed *feedImplementation) MarkAsNotDirty(columns ...string) {
-	// No-op for neat ORM
+	feed.originalData = feed.Data()
 }
+
+

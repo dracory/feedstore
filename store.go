@@ -150,6 +150,10 @@ func (st *storeImplementation) FeedCount(ctx context.Context, query FeedQueryInt
 		query = FeedQuery()
 	}
 
+	if err := query.Validate(); err != nil {
+		return 0, err
+	}
+
 	q := st.buildFeedQuery(query)
 
 	var count int64
@@ -215,6 +219,10 @@ func (st *storeImplementation) FeedFindByID(ctx context.Context, id string) (Fee
 }
 
 func (st *storeImplementation) FeedList(ctx context.Context, query FeedQueryInterface) ([]FeedInterface, error) {
+	if err := query.Validate(); err != nil {
+		return []FeedInterface{}, err
+	}
+
 	q := st.buildFeedQuery(query)
 
 	var results []map[string]any
@@ -257,9 +265,29 @@ func (st *storeImplementation) FeedUpdate(ctx context.Context, feed FeedInterfac
 		return errors.New("feed is nil")
 	}
 
-	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-
 	data := st.feedToMap(feed)
+	delete(data, COLUMN_ID) // ID is not updateable
+
+	// Check if any meaningful field has changed
+	feedImpl, ok := feed.(*feedImplementation)
+	if ok && feedImpl.originalData != nil {
+		hasChanges := false
+		for k, v := range data {
+			if k == COLUMN_ID || k == COLUMN_CREATED_AT || k == COLUMN_UPDATED_AT {
+				continue
+			}
+			if feedImpl.originalData[k] != v {
+				hasChanges = true
+				break
+			}
+		}
+		if !hasChanges {
+			return nil
+		}
+	}
+
+	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
+	data = st.feedToMap(feed)
 	delete(data, COLUMN_ID) // ID is not updateable
 
 	_, err := st.db.Query().Table(st.feedTableName).Where("id = ?", feed.ID()).Update(data)
@@ -275,6 +303,10 @@ func (st *storeImplementation) FeedUpdate(ctx context.Context, feed FeedInterfac
 func (st *storeImplementation) LinkCount(ctx context.Context, query LinkQueryInterface) (int64, error) {
 	if query == nil {
 		query = LinkQuery()
+	}
+
+	if err := query.Validate(); err != nil {
+		return 0, err
 	}
 
 	q := st.buildLinkQuery(query)
@@ -341,6 +373,10 @@ func (st *storeImplementation) LinkFindByID(ctx context.Context, id string) (Lin
 }
 
 func (st *storeImplementation) LinkList(ctx context.Context, query LinkQueryInterface) ([]LinkInterface, error) {
+	if err := query.Validate(); err != nil {
+		return []LinkInterface{}, err
+	}
+
 	q := st.buildLinkQuery(query)
 
 	var results []map[string]any
@@ -383,9 +419,29 @@ func (st *storeImplementation) LinkUpdate(ctx context.Context, link LinkInterfac
 		return errors.New("link is nil")
 	}
 
-	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-
 	data := st.linkToMap(link)
+	delete(data, COLUMN_ID) // ID is not updateable
+
+	// Check if any meaningful field has changed
+	linkImpl, ok := link.(*linkImplementation)
+	if ok && linkImpl.originalData != nil {
+		hasChanges := false
+		for k, v := range data {
+			if k == COLUMN_ID || k == COLUMN_CREATED_AT || k == COLUMN_UPDATED_AT {
+				continue
+			}
+			if linkImpl.originalData[k] != v {
+				hasChanges = true
+				break
+			}
+		}
+		if !hasChanges {
+			return nil
+		}
+	}
+
+	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
+	data = st.linkToMap(link)
 	delete(data, COLUMN_ID) // ID is not updateable
 
 	_, err := st.db.Query().Table(st.linkTableName).Where("id = ?", link.ID()).Update(data)
@@ -394,7 +450,7 @@ func (st *storeImplementation) LinkUpdate(ctx context.Context, link LinkInterfac
 	}
 
 	link.MarkAsNotDirty()
-	return err
+	return nil
 }
 
 // Helper methods for building queries and converting data
@@ -409,7 +465,7 @@ func (st *storeImplementation) buildFeedQuery(query FeedQueryInterface) contract
 
 	// ID IN filter
 	if query.IsIDInSet() {
-		q = q.Where("id IN ?", query.GetIDIn())
+		q = q.WhereIn("id", lo.ToAnySlice(query.GetIDIn()))
 	}
 
 	// Status filter
@@ -419,7 +475,7 @@ func (st *storeImplementation) buildFeedQuery(query FeedQueryInterface) contract
 
 	// Status IN filter
 	if query.IsStatusInSet() {
-		q = q.Where("status IN ?", query.GetStatusIn())
+		q = q.WhereIn("status", lo.ToAnySlice(query.GetStatusIn()))
 	}
 
 	// Created At filters
@@ -491,7 +547,7 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 
 	// ID IN filter
 	if query.IsIDInSet() {
-		q = q.Where("id IN ?", query.GetIDIn())
+		q = q.WhereIn("id", lo.ToAnySlice(query.GetIDIn()))
 	}
 
 	// Feed ID filter
@@ -506,7 +562,7 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 
 	// Status IN filter
 	if query.IsStatusInSet() {
-		q = q.Where("status IN ?", query.GetStatusIn())
+		q = q.WhereIn("status", lo.ToAnySlice(query.GetStatusIn()))
 	}
 
 	// URL filter
