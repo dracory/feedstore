@@ -457,7 +457,7 @@ func (st *storeImplementation) buildFeedQuery(query FeedQueryInterface) contract
 		// No filter needed
 	} else {
 		// Exclude soft deleted by default
-		q = q.Where("soft_deleted_at = ?", carbon.Parse(MAX_DATETIME, carbon.UTC).StdTime())
+		q = q.Where("soft_deleted_at = ?", MAX_DATETIME)
 	}
 
 	// Ordering
@@ -540,7 +540,7 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 		// No filter needed
 	} else {
 		// Exclude soft deleted by default
-		q = q.Where("soft_deleted_at = ?", carbon.Parse(MAX_DATETIME, carbon.UTC).StdTime())
+		q = q.Where("soft_deleted_at = ?", MAX_DATETIME)
 	}
 
 	// Ordering
