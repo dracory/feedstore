@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dracory/sb"
 	"github.com/dromara/carbon/v2"
 	_ "modernc.org/sqlite"
 )
@@ -327,13 +326,13 @@ func TestStoreFeedList(t *testing.T) {
 		},
 		{
 			name:          "List with OrderBy CreatedAt ASC",
-			query:         FeedQuery().SetLimit(10).SetOrderBy(COLUMN_CREATED_AT).SetOrderDirection(sb.ASC),
+			query:         FeedQuery().SetLimit(10).SetOrderBy(COLUMN_CREATED_AT).SetOrderDirection("asc"),
 			expectedCount: 3,
 			expectedIDs:   []string{feed1.ID(), feed2.ID(), feed3.ID()},
 		},
 		{
 			name:          "List with OrderBy CreatedAt DESC",
-			query:         FeedQuery().SetLimit(10).SetOrderBy(COLUMN_CREATED_AT).SetOrderDirection(sb.DESC),
+			query:         FeedQuery().SetLimit(10).SetOrderBy(COLUMN_CREATED_AT).SetOrderDirection("desc"),
 			expectedCount: 3,
 			expectedIDs:   []string{feed3.ID(), feed2.ID(), feed1.ID()},
 		},

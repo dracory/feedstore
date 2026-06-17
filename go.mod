@@ -3,8 +3,7 @@ module github.com/dracory/feedstore
 go 1.26.3
 
 require (
-	github.com/dracory/neat v0.15.0
-	github.com/dracory/sb v0.26.0
+	github.com/dracory/neat v0.19.0
 	github.com/dromara/carbon/v2 v2.6.16
 	github.com/samber/lo v1.53.0
 	github.com/spf13/cast v1.10.0
@@ -12,9 +11,7 @@ require (
 )
 
 require (
-	github.com/dracory/uid v1.9.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/georgysavva/scany v1.2.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
