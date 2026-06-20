@@ -35,6 +35,39 @@ type feedImplementation struct {
 // == INTERFACE
 // ============================================================================
 
+type FeedInterface interface {
+	Data() map[string]string
+	MarkAsNotDirty(...string)
+
+	CreatedAt() string
+	CreatedAtCarbon() *carbon.Carbon
+	SetCreatedAt(createdAt string) FeedInterface
+	Description() string
+	SetDescription(description string) FeedInterface
+	FetchInterval() string
+	SetFetchInterval(fetchInterval string) FeedInterface
+	ID() string
+	SetID(id string) FeedInterface
+	LastFetchedAt() string
+	LastFetchedAtCarbon() *carbon.Carbon
+	SetLastFetchedAt(lastFetchedAt time.Time) FeedInterface
+	SetLastFetchedAtString(lastFetchedAt string) FeedInterface
+	Memo() string
+	SetMemo(memo string) FeedInterface
+	Name() string
+	SetName(name string) FeedInterface
+	GetSoftDeletedAt() string
+	GetSoftDeletedAtCarbon() *carbon.Carbon
+	SetSoftDeletedAt(softDeletedAt string) FeedInterface
+	Status() string
+	SetStatus(status string) FeedInterface
+	UpdatedAt() string
+	UpdatedAtCarbon() *carbon.Carbon
+	SetUpdatedAt(updatedAt string) FeedInterface
+	URL() string
+	SetURL(url string) FeedInterface
+}
+
 var _ FeedInterface = (*feedImplementation)(nil)
 
 // ============================================================================
@@ -249,5 +282,3 @@ func (feed *feedImplementation) Data() map[string]string {
 func (feed *feedImplementation) MarkAsNotDirty(columns ...string) {
 	feed.originalData = feed.Data()
 }
-
-

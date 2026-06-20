@@ -4,6 +4,97 @@ import (
 	"errors"
 )
 
+// ============================================================================
+// == INTERFACE
+// ============================================================================
+
+// FeedQueryInterface defines the interface for querying feeds
+type FeedQueryInterface interface {
+	// Validation method
+	Validate() error
+
+	// Count related methods
+	IsCountOnlySet() bool
+	GetCountOnly() bool
+	SetCountOnly(countOnly bool) FeedQueryInterface
+
+	// Soft delete related query methods
+	IsWithSoftDeletedSet() bool
+	GetWithSoftDeleted() bool
+	SetWithSoftDeleted(withSoftDeleted bool) FeedQueryInterface
+
+	IsOnlySoftDeletedSet() bool
+	GetOnlySoftDeleted() bool
+	SetOnlySoftDeleted(onlySoftDeleted bool) FeedQueryInterface
+
+	// Field query methods
+
+	IsCreatedAtGteSet() bool
+	GetCreatedAtGte() string
+	SetCreatedAtGte(createdAt string) FeedQueryInterface
+
+	IsCreatedAtLteSet() bool
+	GetCreatedAtLte() string
+	SetCreatedAtLte(createdAt string) FeedQueryInterface
+
+	IsIDSet() bool
+	GetID() string
+	SetID(id string) FeedQueryInterface
+
+	IsIDInSet() bool
+	GetIDIn() []string
+	SetIDIn(ids []string) FeedQueryInterface
+
+	IsLastFetchedAtLteSet() bool
+	GetLastFetchedAtLte() string
+	SetLastFetchedAtLte(lastFetchedAtLte string) FeedQueryInterface
+
+	IsLastFetchedAtGteSet() bool
+	GetLastFetchedAtGte() string
+	SetLastFetchedAtGte(lastFetchedAtGte string) FeedQueryInterface
+
+	IsLimitSet() bool
+	GetLimit() int
+	SetLimit(limit int) FeedQueryInterface
+
+	IsOffsetSet() bool
+	GetOffset() int
+	SetOffset(offset int) FeedQueryInterface
+
+	IsOrderBySet() bool
+	GetOrderBy() string
+	SetOrderBy(orderBy string) FeedQueryInterface
+
+	IsOrderDirectionSet() bool
+	GetOrderDirection() string
+	SetOrderDirection(orderDirection string) FeedQueryInterface
+
+	IsStatusSet() bool
+	GetStatus() string
+	SetStatus(status string) FeedQueryInterface
+
+	IsStatusInSet() bool
+	GetStatusIn() []string
+	SetStatusIn(statuses []string) FeedQueryInterface
+
+	IsUpdatedAtGteSet() bool
+	GetUpdatedAtGte() string
+	SetUpdatedAtGte(updatedAt string) FeedQueryInterface
+
+	IsUpdatedAtLteSet() bool
+	GetUpdatedAtLte() string
+	SetUpdatedAtLte(updatedAt string) FeedQueryInterface
+
+	// Owner ID (legacy, kept for compatibility)
+	IsOwnerIDSet() bool
+	GetOwnerID() string
+	SetOwnerID(ownerID string) FeedQueryInterface
+}
+
+// ============================================================================
+// == TYPE
+// ============================================================================
+
 // feedQuery implements the FeedQueryInterface
 type feedQuery struct {
 	isCountOnlySet bool
