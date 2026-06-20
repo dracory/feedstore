@@ -16,6 +16,10 @@ import (
 	"github.com/samber/lo"
 )
 
+// ============================================================================
+// == TYPE
+// ============================================================================
+
 var _ StoreInterface = (*storeImplementation)(nil) // verify it extends the interface
 
 type storeImplementation struct {
@@ -26,6 +30,10 @@ type storeImplementation struct {
 	debugEnabled       bool
 	logger             *slog.Logger
 }
+
+// ============================================================================
+// == MIGRATE
+// ============================================================================
 
 // MigrateUp creates the feed and link tables
 func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) error {
@@ -119,6 +127,10 @@ func (st *storeImplementation) MigrateDown(ctx context.Context, tx ...*sql.Tx) e
 	return nil
 }
 
+// ============================================================================
+// == DEBUG
+// ============================================================================
+
 // EnableDebug - enables the debug option
 func (st *storeImplementation) EnableDebug(debug bool) {
 	st.debugEnabled = debug
@@ -130,6 +142,10 @@ func (st *storeImplementation) EnableDebug(debug bool) {
 		st.logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 	}
 }
+
+// ============================================================================
+// == DB
+// ============================================================================
 
 func (st *storeImplementation) GetFeedTableName() string {
 	return st.feedTableName
