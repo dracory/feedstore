@@ -3,6 +3,7 @@ package feedstore
 import (
 	"time"
 
+	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
 	neatuid "github.com/dracory/neat/support/uid"
@@ -105,7 +106,7 @@ func NewLink() *linkImplementation {
 	link.SetTime(time.Time{})
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	link.SetSoftDeletedAt(MAX_DATETIME)
+	link.SetSoftDeletedAt(neat.MaxDateTime)
 	link.MarkAsNotDirty()
 	return link
 }

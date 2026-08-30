@@ -576,7 +576,7 @@ func (st *storeImplementation) buildFeedQuery(query FeedQueryInterface) contract
 		// No filter needed
 	} else {
 		// Exclude soft deleted by default
-		q = q.Where("soft_deleted_at = ?", MAX_DATETIME)
+		q = q.Where("soft_deleted_at = ?", neat.MaxDateTime)
 	}
 
 	// Ordering
@@ -659,7 +659,7 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 		// No filter needed
 	} else {
 		// Exclude soft deleted by default
-		q = q.Where("soft_deleted_at = ?", MAX_DATETIME)
+		q = q.Where("soft_deleted_at = ?", neat.MaxDateTime)
 	}
 
 	// Ordering

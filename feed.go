@@ -3,6 +3,7 @@ package feedstore
 import (
 	"time"
 
+	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
 	neatuid "github.com/dracory/neat/support/uid"
@@ -81,11 +82,11 @@ func NewFeed() *feedImplementation {
 	feed.SetDescription("")
 	feed.SetURL("")
 	feed.SetFetchInterval("600")
-	feed.SetLastFetchedAt(time.Time{})
+	feed.SetLastFetchedAtString(neat.NullDateTime)
 	feed.SetMemo("")
 	feed.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	feed.SetSoftDeletedAt(MAX_DATETIME)
+	feed.SetSoftDeletedAt(neat.MaxDateTime)
 	feed.MarkAsNotDirty()
 
 	return feed
@@ -172,7 +173,11 @@ func (feed *feedImplementation) LastFetchedAt() string {
 	if feed.LastFetchedAtField.IsZero() {
 		return ""
 	}
-	return carbon.CreateFromStdTime(feed.LastFetchedAtField).ToDateTimeString()
+	s := carbon.CreateFromStdTime(feed.LastFetchedAtField).ToDateTimeString()
+	if s == neat.NullDateTime {
+		return ""
+	}
+	return s
 }
 
 func (feed *feedImplementation) LastFetchedAtCarbon() *carbon.Carbon {
