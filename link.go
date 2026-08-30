@@ -100,10 +100,10 @@ func NewLink() *linkImplementation {
 	link.SetViews("0")
 	link.SetVotesUp("0")
 	link.SetVotesDown("0")
-	link.SetReportedAt(time.Time{})
+	link.SetReportedAtString(neat.NullDateTime)
 	link.SetReport("")
-	link.SetCheckedAt(time.Time{})
-	link.SetTime(time.Time{})
+	link.SetCheckedAtString(neat.NullDateTime)
+	link.SetTimeString(neat.NullDateTime)
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetSoftDeletedAt(neat.MaxDateTime)
@@ -151,7 +151,7 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 
 func (link *linkImplementation) CheckedAt() string {
 	if link.CheckedAtField.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.CheckedAtField).ToDateTimeString()
 }
@@ -285,7 +285,7 @@ func (link *linkImplementation) SetReport(report string) LinkInterface {
 
 func (link *linkImplementation) ReportedAt() string {
 	if link.ReportedAtField.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.ReportedAtField).ToDateTimeString()
 }
@@ -310,7 +310,7 @@ func (link *linkImplementation) SetReportedAtString(reportedAt string) LinkInter
 
 func (link *linkImplementation) Time() string {
 	if link.TimeField.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.TimeField).ToDateTimeString()
 }

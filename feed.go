@@ -171,13 +171,9 @@ func (feed *feedImplementation) SetID(id string) FeedInterface {
 
 func (feed *feedImplementation) LastFetchedAt() string {
 	if feed.LastFetchedAtField.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
-	s := carbon.CreateFromStdTime(feed.LastFetchedAtField).ToDateTimeString()
-	if s == neat.NullDateTime {
-		return ""
-	}
-	return s
+	return carbon.CreateFromStdTime(feed.LastFetchedAtField).ToDateTimeString()
 }
 
 func (feed *feedImplementation) LastFetchedAtCarbon() *carbon.Carbon {
