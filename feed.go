@@ -123,7 +123,7 @@ func NewFeedFromExistingData(data map[string]string) *feedImplementation {
 
 func (feed *feedImplementation) CreatedAt() string {
 	if feed.CreatedAtField.CreatedAt.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(feed.CreatedAtField.CreatedAt).ToDateTimeString()
 }
@@ -131,7 +131,8 @@ func (feed *feedImplementation) CreatedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(feed.CreatedAtField.CreatedAt)
 }
 func (feed *feedImplementation) SetCreatedAt(createdAt string) FeedInterface {
-	if createdAt == "" {
+	if createdAt == "" || createdAt == neat.NullDateTime {
+		feed.CreatedAtField.CreatedAt = time.Time{}
 		return feed
 	}
 	feed.CreatedAtField.CreatedAt = carbon.Parse(createdAt, carbon.UTC).StdTime()
@@ -186,7 +187,7 @@ func (feed *feedImplementation) SetLastFetchedAt(lastFetchedAt time.Time) FeedIn
 }
 
 func (feed *feedImplementation) SetLastFetchedAtString(lastFetchedAt string) FeedInterface {
-	if lastFetchedAt == "" {
+	if lastFetchedAt == "" || lastFetchedAt == neat.NullDateTime {
 		feed.LastFetchedAtField = time.Time{}
 		return feed
 	}
@@ -212,7 +213,7 @@ func (feed *feedImplementation) SetName(name string) FeedInterface {
 
 func (feed *feedImplementation) GetSoftDeletedAt() string {
 	if feed.SoftDeletedAt.IsZero() {
-		return ""
+		return neat.MaxDateTime
 	}
 	return carbon.CreateFromStdTime(feed.SoftDeletedAt).ToDateTimeString()
 }
@@ -222,7 +223,7 @@ func (feed *feedImplementation) GetSoftDeletedAtCarbon() *carbon.Carbon {
 }
 
 func (feed *feedImplementation) SetSoftDeletedAt(softDeletedAt string) FeedInterface {
-	if softDeletedAt == "" {
+	if softDeletedAt == "" || softDeletedAt == neat.NullDateTime {
 		feed.SoftDeletedAt = time.Time{}
 		return feed
 	}
@@ -240,7 +241,7 @@ func (feed *feedImplementation) SetStatus(status string) FeedInterface {
 
 func (feed *feedImplementation) UpdatedAt() string {
 	if feed.UpdatedAtField.UpdatedAt.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(feed.UpdatedAtField.UpdatedAt).ToDateTimeString()
 }
@@ -248,7 +249,8 @@ func (feed *feedImplementation) UpdatedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(feed.UpdatedAtField.UpdatedAt)
 }
 func (feed *feedImplementation) SetUpdatedAt(updatedAt string) FeedInterface {
-	if updatedAt == "" {
+	if updatedAt == "" || updatedAt == neat.NullDateTime {
+		feed.UpdatedAtField.UpdatedAt = time.Time{}
 		return feed
 	}
 	feed.UpdatedAtField.UpdatedAt = carbon.Parse(updatedAt, carbon.UTC).StdTime()

@@ -166,7 +166,7 @@ func (link *linkImplementation) SetCheckedAt(timeChecked time.Time) LinkInterfac
 }
 
 func (link *linkImplementation) SetCheckedAtString(timeChecked string) LinkInterface {
-	if timeChecked == "" {
+	if timeChecked == "" || timeChecked == neat.NullDateTime {
 		link.CheckedAtField = time.Time{}
 		return link
 	}
@@ -176,7 +176,7 @@ func (link *linkImplementation) SetCheckedAtString(timeChecked string) LinkInter
 
 func (link *linkImplementation) CreatedAt() string {
 	if link.CreatedAtField.CreatedAt.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.CreatedAtField.CreatedAt).ToDateTimeString()
 }
@@ -186,7 +186,8 @@ func (link *linkImplementation) CreatedAtCarbon() *carbon.Carbon {
 }
 
 func (link *linkImplementation) SetCreatedAt(createdAt string) LinkInterface {
-	if createdAt == "" {
+	if createdAt == "" || createdAt == neat.NullDateTime {
+		link.CreatedAtField.CreatedAt = time.Time{}
 		return link
 	}
 	link.CreatedAtField.CreatedAt = carbon.Parse(createdAt, carbon.UTC).StdTime()
@@ -300,7 +301,7 @@ func (link *linkImplementation) SetReportedAt(reportedAt time.Time) LinkInterfac
 }
 
 func (link *linkImplementation) SetReportedAtString(reportedAt string) LinkInterface {
-	if reportedAt == "" {
+	if reportedAt == "" || reportedAt == neat.NullDateTime {
 		link.ReportedAtField = time.Time{}
 		return link
 	}
@@ -325,7 +326,7 @@ func (link *linkImplementation) SetTime(time time.Time) LinkInterface {
 }
 
 func (link *linkImplementation) SetTimeString(timeStr string) LinkInterface {
-	if timeStr == "" {
+	if timeStr == "" || timeStr == neat.NullDateTime {
 		link.TimeField = time.Time{}
 		return link
 	}
@@ -335,7 +336,7 @@ func (link *linkImplementation) SetTimeString(timeStr string) LinkInterface {
 
 func (link *linkImplementation) GetSoftDeletedAt() string {
 	if link.SoftDeletedAt.IsZero() {
-		return ""
+		return neat.MaxDateTime
 	}
 	return carbon.CreateFromStdTime(link.SoftDeletedAt).ToDateTimeString()
 }
@@ -344,7 +345,7 @@ func (link *linkImplementation) GetSoftDeletedAtCarbon() *carbon.Carbon {
 }
 
 func (link *linkImplementation) SetSoftDeletedAt(softDeletedAt string) LinkInterface {
-	if softDeletedAt == "" {
+	if softDeletedAt == "" || softDeletedAt == neat.NullDateTime {
 		link.SoftDeletedAt = time.Time{}
 		return link
 	}
@@ -354,7 +355,7 @@ func (link *linkImplementation) SetSoftDeletedAt(softDeletedAt string) LinkInter
 
 func (link *linkImplementation) UpdatedAt() string {
 	if link.UpdatedAtField.UpdatedAt.IsZero() {
-		return ""
+		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.UpdatedAtField.UpdatedAt).ToDateTimeString()
 }
@@ -364,7 +365,8 @@ func (link *linkImplementation) UpdatedAtCarbon() *carbon.Carbon {
 }
 
 func (link *linkImplementation) SetUpdatedAt(updatedAt string) LinkInterface {
-	if updatedAt == "" {
+	if updatedAt == "" || updatedAt == neat.NullDateTime {
+		link.UpdatedAtField.UpdatedAt = time.Time{}
 		return link
 	}
 	link.UpdatedAtField.UpdatedAt = carbon.Parse(updatedAt, carbon.UTC).StdTime()
