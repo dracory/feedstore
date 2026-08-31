@@ -559,15 +559,6 @@ func (st *storeImplementation) buildFeedQuery(query FeedQueryInterface) contract
 		q = q.Where("updated_at <= ?", query.GetUpdatedAtLte())
 	}
 
-	// Time (publication datetime) filters
-	if query.IsTimeGteSet() {
-		q = q.Where("time >= ?", query.GetTimeGte())
-	}
-
-	if query.IsTimeLteSet() {
-		q = q.Where("time <= ?", query.GetTimeLte())
-	}
-
 	// Last Fetched At filters
 	if query.IsLastFetchedAtGteSet() {
 		q = q.Where("last_fetched_at >= ?", query.GetLastFetchedAtGte())
