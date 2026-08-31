@@ -114,6 +114,8 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 			table.String(COLUMN_STATUS, 50)
 			table.String(COLUMN_TITLE, 255)
 			table.String(COLUMN_DESCRIPTION, 1024).Nullable()
+			table.Text(COLUMN_CONTENT).Nullable()
+			table.String(COLUMN_AUTHOR, 255).Nullable()
 			table.String(COLUMN_URL, 1024)
 			table.String(COLUMN_VIEWS, 50)
 			table.String(COLUMN_VOTES_UP, 50)
@@ -719,6 +721,8 @@ func (st *storeImplementation) linkToMap(link LinkInterface) map[string]any {
 		COLUMN_STATUS:          link.Status(),
 		COLUMN_TITLE:           link.Title(),
 		COLUMN_DESCRIPTION:     link.Description(),
+		COLUMN_CONTENT:         link.Content(),
+		COLUMN_AUTHOR:          link.Author(),
 		COLUMN_URL:             link.URL(),
 		COLUMN_VIEWS:           link.Views(),
 		COLUMN_VOTES_UP:        link.VotesUp(),

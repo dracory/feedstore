@@ -21,6 +21,8 @@ type linkImplementation struct {
 	StatusField      string    `db:"status"`
 	TitleField       string    `db:"title"`
 	DescriptionField string    `db:"description"`
+	ContentField     string    `db:"content"`
+	AuthorField      string    `db:"author"`
 	URLField         string    `db:"url"`
 	ViewsField       string    `db:"views"`
 	VotesUpField     string    `db:"votes_up"`
@@ -49,6 +51,10 @@ type LinkInterface interface {
 	SetCreatedAt(createdAt string) LinkInterface
 	Description() string
 	SetDescription(description string) LinkInterface
+	Content() string
+	SetContent(content string) LinkInterface
+	Author() string
+	SetAuthor(author string) LinkInterface
 	FeedID() string
 	SetFeedID(feedID string) LinkInterface
 	ID() string
@@ -97,6 +103,8 @@ func NewLink() *linkImplementation {
 	link := &linkImplementation{}
 	link.SetID(neatuid.GenerateShortID())
 	link.SetDescription("")
+	link.SetContent("")
+	link.SetAuthor("")
 	link.SetViews("0")
 	link.SetVotesUp("0")
 	link.SetVotesDown("0")
@@ -119,6 +127,12 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 	link.SetStatus(data[COLUMN_STATUS])
 	link.SetTitle(data[COLUMN_TITLE])
 	link.SetDescription(data[COLUMN_DESCRIPTION])
+	if v, ok := data[COLUMN_CONTENT]; ok {
+		link.SetContent(v)
+	}
+	if v, ok := data[COLUMN_AUTHOR]; ok {
+		link.SetAuthor(v)
+	}
 	link.SetURL(data[COLUMN_URL])
 	link.SetViews(data[COLUMN_VIEWS])
 	link.SetVotesUp(data[COLUMN_VOTES_UP])
@@ -200,6 +214,24 @@ func (link *linkImplementation) Description() string {
 
 func (link *linkImplementation) SetDescription(description string) LinkInterface {
 	link.DescriptionField = description
+	return link
+}
+
+func (link *linkImplementation) Content() string {
+	return link.ContentField
+}
+
+func (link *linkImplementation) SetContent(content string) LinkInterface {
+	link.ContentField = content
+	return link
+}
+
+func (link *linkImplementation) Author() string {
+	return link.AuthorField
+}
+
+func (link *linkImplementation) SetAuthor(author string) LinkInterface {
+	link.AuthorField = author
 	return link
 }
 
@@ -380,6 +412,8 @@ func (link *linkImplementation) Data() map[string]string {
 	data[COLUMN_STATUS] = link.Status()
 	data[COLUMN_TITLE] = link.Title()
 	data[COLUMN_DESCRIPTION] = link.Description()
+	data[COLUMN_CONTENT] = link.Content()
+	data[COLUMN_AUTHOR] = link.Author()
 	data[COLUMN_URL] = link.URL()
 	data[COLUMN_VIEWS] = link.Views()
 	data[COLUMN_VOTES_UP] = link.VotesUp()
