@@ -94,6 +94,11 @@ type LinkQueryInterface interface {
 	GetTimeLte() string
 	SetTimeLte(time string) LinkQueryInterface
 
+	// Priority filter
+	IsPrioritySet() bool
+	GetPriority() string
+	SetPriority(priority string) LinkQueryInterface
+
 	// Owner ID (legacy, kept for compatibility)
 	IsOwnerIDSet() bool
 	GetOwnerID() string
@@ -165,6 +170,9 @@ type linkQuery struct {
 
 	isTimeLteSet bool
 	timeLte      string
+
+	isPrioritySet bool
+	priority      string
 }
 
 var _ LinkQueryInterface = (*linkQuery)(nil)
@@ -222,6 +230,10 @@ func (q *linkQuery) Validate() error {
 
 	if q.IsTimeLteSet() && q.GetTimeLte() == "" {
 		return errors.New("document query: time_lte cannot be empty")
+	}
+
+	if q.IsPrioritySet() && q.GetPriority() == "" {
+		return errors.New("document query: priority cannot be empty")
 	}
 
 	return nil
@@ -586,5 +598,26 @@ func (q *linkQuery) GetTimeLte() string {
 func (q *linkQuery) SetTimeLte(timeLte string) LinkQueryInterface {
 	q.isTimeLteSet = true
 	q.timeLte = timeLte
+	return q
+}
+
+// ============================================================================
+// == Priority Getters and Setters
+// ============================================================================
+
+func (q *linkQuery) IsPrioritySet() bool {
+	return q.isPrioritySet
+}
+
+func (q *linkQuery) GetPriority() string {
+	if q.IsPrioritySet() {
+		return q.priority
+	}
+	return ""
+}
+
+func (q *linkQuery) SetPriority(priority string) LinkQueryInterface {
+	q.isPrioritySet = true
+	q.priority = priority
 	return q
 }

@@ -23,6 +23,7 @@ type linkImplementation struct {
 	DescriptionField string    `db:"description"`
 	ContentField     string    `db:"content"`
 	AuthorField      string    `db:"author"`
+	PriorityField    string    `db:"priority"`
 	URLField         string    `db:"url"`
 	ViewsField       string    `db:"views"`
 	VotesUpField     string    `db:"votes_up"`
@@ -55,6 +56,8 @@ type LinkInterface interface {
 	SetContent(content string) LinkInterface
 	Author() string
 	SetAuthor(author string) LinkInterface
+	Priority() bool
+	SetPriority(priority bool) LinkInterface
 	FeedID() string
 	SetFeedID(feedID string) LinkInterface
 	ID() string
@@ -105,6 +108,7 @@ func NewLink() *linkImplementation {
 	link.SetDescription("")
 	link.SetContent("")
 	link.SetAuthor("")
+	link.SetPriority(false)
 	link.SetViews("0")
 	link.SetVotesUp("0")
 	link.SetVotesDown("0")
@@ -132,6 +136,9 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 	}
 	if v, ok := data[COLUMN_AUTHOR]; ok {
 		link.SetAuthor(v)
+	}
+	if v, ok := data[COLUMN_PRIORITY]; ok {
+		link.PriorityField = v
 	}
 	link.SetURL(data[COLUMN_URL])
 	link.SetViews(data[COLUMN_VIEWS])
@@ -232,6 +239,19 @@ func (link *linkImplementation) Author() string {
 
 func (link *linkImplementation) SetAuthor(author string) LinkInterface {
 	link.AuthorField = author
+	return link
+}
+
+func (link *linkImplementation) Priority() bool {
+	return link.PriorityField == "1" || link.PriorityField == "true"
+}
+
+func (link *linkImplementation) SetPriority(priority bool) LinkInterface {
+	if priority {
+		link.PriorityField = "1"
+	} else {
+		link.PriorityField = "0"
+	}
 	return link
 }
 
@@ -414,6 +434,7 @@ func (link *linkImplementation) Data() map[string]string {
 	data[COLUMN_DESCRIPTION] = link.Description()
 	data[COLUMN_CONTENT] = link.Content()
 	data[COLUMN_AUTHOR] = link.Author()
+	data[COLUMN_PRIORITY] = link.PriorityField
 	data[COLUMN_URL] = link.URL()
 	data[COLUMN_VIEWS] = link.Views()
 	data[COLUMN_VOTES_UP] = link.VotesUp()

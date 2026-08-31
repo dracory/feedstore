@@ -116,6 +116,7 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 			table.String(COLUMN_DESCRIPTION, 1024).Nullable()
 			table.Text(COLUMN_CONTENT).Nullable()
 			table.String(COLUMN_AUTHOR, 255).Nullable()
+			table.String(COLUMN_PRIORITY, 1).Nullable()
 			table.String(COLUMN_URL, 1024)
 			table.String(COLUMN_VIEWS, 50)
 			table.String(COLUMN_VOTES_UP, 50)
@@ -662,6 +663,11 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 		q = q.Where("time <= ?", query.GetTimeLte())
 	}
 
+	// Priority filter
+	if query.IsPrioritySet() {
+		q = q.Where("priority = ?", query.GetPriority())
+	}
+
 	// Soft delete filters
 	if query.IsOnlySoftDeletedSet() && query.GetOnlySoftDeleted() {
 		q = q.Where("soft_deleted_at <= ?", carbon.Now(carbon.UTC).ToDateTimeString())
@@ -723,6 +729,7 @@ func (st *storeImplementation) linkToMap(link LinkInterface) map[string]any {
 		COLUMN_DESCRIPTION:     link.Description(),
 		COLUMN_CONTENT:         link.Content(),
 		COLUMN_AUTHOR:          link.Author(),
+		COLUMN_PRIORITY:        priorityToStr(link.Priority()),
 		COLUMN_URL:             link.URL(),
 		COLUMN_VIEWS:           link.Views(),
 		COLUMN_VOTES_UP:        link.VotesUp(),
@@ -759,6 +766,13 @@ func (st *storeImplementation) mapToLink(data map[string]any) LinkInterface {
 		}
 	}
 	return NewLinkFromExistingData(stringData)
+}
+
+func priorityToStr(b bool) string {
+	if b {
+		return "1"
+	}
+	return "0"
 }
 
 func toString(v any) string {
