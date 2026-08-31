@@ -85,6 +85,15 @@ type LinkQueryInterface interface {
 	GetUpdatedAtLte() string
 	SetUpdatedAtLte(updatedAt string) LinkQueryInterface
 
+	// Time (publication datetime) filters
+	IsTimeGteSet() bool
+	GetTimeGte() string
+	SetTimeGte(time string) LinkQueryInterface
+
+	IsTimeLteSet() bool
+	GetTimeLte() string
+	SetTimeLte(time string) LinkQueryInterface
+
 	// Owner ID (legacy, kept for compatibility)
 	IsOwnerIDSet() bool
 	GetOwnerID() string
@@ -150,6 +159,12 @@ type linkQuery struct {
 
 	isUpdatedAtLteSet bool
 	updatedAtLte      string
+
+	isTimeGteSet bool
+	timeGte      string
+
+	isTimeLteSet bool
+	timeLte      string
 }
 
 var _ LinkQueryInterface = (*linkQuery)(nil)
@@ -199,6 +214,14 @@ func (q *linkQuery) Validate() error {
 
 	if q.IsURLSet() && q.GetURL() == "" {
 		return errors.New("document query: url cannot be empty")
+	}
+
+	if q.IsTimeGteSet() && q.GetTimeGte() == "" {
+		return errors.New("document query: time_gte cannot be empty")
+	}
+
+	if q.IsTimeLteSet() && q.GetTimeLte() == "" {
+		return errors.New("document query: time_lte cannot be empty")
 	}
 
 	return nil
@@ -525,5 +548,43 @@ func (q *linkQuery) GetOnlySoftDeleted() bool {
 func (q *linkQuery) SetOnlySoftDeleted(onlySoftDeleted bool) LinkQueryInterface {
 	q.isOnlySoftDeletedSet = true
 	q.onlySoftDeleted = onlySoftDeleted
+	return q
+}
+
+// ============================================================================
+// == Time (publication datetime) Getters and Setters
+// ============================================================================
+
+func (q *linkQuery) IsTimeGteSet() bool {
+	return q.isTimeGteSet
+}
+
+func (q *linkQuery) GetTimeGte() string {
+	if q.IsTimeGteSet() {
+		return q.timeGte
+	}
+	return ""
+}
+
+func (q *linkQuery) SetTimeGte(timeGte string) LinkQueryInterface {
+	q.isTimeGteSet = true
+	q.timeGte = timeGte
+	return q
+}
+
+func (q *linkQuery) IsTimeLteSet() bool {
+	return q.isTimeLteSet
+}
+
+func (q *linkQuery) GetTimeLte() string {
+	if q.IsTimeLteSet() {
+		return q.timeLte
+	}
+	return ""
+}
+
+func (q *linkQuery) SetTimeLte(timeLte string) LinkQueryInterface {
+	q.isTimeLteSet = true
+	q.timeLte = timeLte
 	return q
 }
