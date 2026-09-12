@@ -169,7 +169,7 @@ func TestStoreFeedDelete(t *testing.T) {
 	}
 
 	// 2. Verify it exists
-	foundFeed, err := store.FeedFindByID(ctx, feed.ID())
+	foundFeed, err := store.FeedFindByID(ctx, feed.GetID())
 	if err != nil {
 		t.Fatalf("FeedFindByID should succeed before delete, but got error: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestStoreFeedDelete(t *testing.T) {
 	}
 
 	// 4. Verify it's gone
-	foundFeed, err = store.FeedFindByID(ctx, feed.ID())
+	foundFeed, err = store.FeedFindByID(ctx, feed.GetID())
 	if err != nil {
 		t.Fatalf("FeedFindByID should succeed after delete, but got error: %v", err)
 	}
@@ -218,7 +218,7 @@ func TestStoreFeedDeleteByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FeedCreate should succeed, but got error: %v", err)
 	}
-	feedID := feed.ID()
+	feedID := feed.GetID()
 
 	// 2. Verify it exists
 	foundFeed, err := store.FeedFindByID(ctx, feedID)
@@ -294,25 +294,25 @@ func TestStoreFeedList(t *testing.T) {
 			name:          "List all (excluding soft deleted)",
 			query:         FeedQuery().SetLimit(10),
 			expectedCount: 3,
-			expectedIDs:   []string{feed1.ID(), feed2.ID(), feed3.ID()},
+			expectedIDs:   []string{feed1.GetID(), feed2.GetID(), feed3.GetID()},
 		},
 		{
 			name:          "List with specific ID",
-			query:         FeedQuery().SetID(feed2.ID()),
+			query:         FeedQuery().SetID(feed2.GetID()),
 			expectedCount: 1,
-			expectedIDs:   []string{feed2.ID()},
+			expectedIDs:   []string{feed2.GetID()},
 		},
 		{
 			name:          "List with specific Status",
 			query:         FeedQuery().SetStatus(FEED_STATUS_ACTIVE).SetLimit(10),
 			expectedCount: 2,
-			expectedIDs:   []string{feed1.ID(), feed3.ID()},
+			expectedIDs:   []string{feed1.GetID(), feed3.GetID()},
 		},
 		{
 			name:          "List with Status IN",
 			query:         FeedQuery().SetStatusIn([]string{FEED_STATUS_INACTIVE}).SetLimit(10),
 			expectedCount: 1,
-			expectedIDs:   []string{feed2.ID()},
+			expectedIDs:   []string{feed2.GetID()},
 		},
 		{
 			name:          "List with Limit",
@@ -328,25 +328,25 @@ func TestStoreFeedList(t *testing.T) {
 			name:          "List with OrderBy CreatedAt ASC",
 			query:         FeedQuery().SetLimit(10).SetOrderBy(COLUMN_CREATED_AT).SetOrderDirection("asc"),
 			expectedCount: 3,
-			expectedIDs:   []string{feed1.ID(), feed2.ID(), feed3.ID()},
+			expectedIDs:   []string{feed1.GetID(), feed2.GetID(), feed3.GetID()},
 		},
 		{
 			name:          "List with OrderBy CreatedAt DESC",
 			query:         FeedQuery().SetLimit(10).SetOrderBy(COLUMN_CREATED_AT).SetOrderDirection("desc"),
 			expectedCount: 3,
-			expectedIDs:   []string{feed3.ID(), feed2.ID(), feed1.ID()},
+			expectedIDs:   []string{feed3.GetID(), feed2.GetID(), feed1.GetID()},
 		},
 		{
 			name:          "List including soft deleted",
 			query:         FeedQuery().SetLimit(10).SetWithSoftDeleted(true),
 			expectedCount: 4,
-			expectedIDs:   []string{feed1.ID(), feed2.ID(), feed3.ID(), feed4.ID()},
+			expectedIDs:   []string{feed1.GetID(), feed2.GetID(), feed3.GetID(), feed4.GetID()},
 		},
 		{
 			name:          "List only soft deleted",
 			query:         FeedQuery().SetLimit(10).SetOnlySoftDeleted(true),
 			expectedCount: 1,
-			expectedIDs:   []string{feed4.ID()},
+			expectedIDs:   []string{feed4.GetID()},
 		},
 		{
 			name:          "List non-existent ID",
@@ -384,7 +384,7 @@ func TestStoreFeedList(t *testing.T) {
 			if len(tc.expectedIDs) > 0 {
 				returnedIDs := make([]string, len(feeds))
 				for i, f := range feeds {
-					returnedIDs[i] = f.ID()
+					returnedIDs[i] = f.GetID()
 				}
 				// Use reflect.DeepEqual for ordered comparison, elementsMatch helper for unordered
 				if strings.Contains(tc.name, "OrderBy") {
@@ -413,10 +413,10 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FeedCreate failed: %v", err)
 	}
-	initialUpdatedAt := feed.UpdatedAt()
+	initialUpdatedAt := feed.GetUpdatedAt()
 
 	// 2. Verify it exists and is not soft deleted
-	foundFeed, err := store.FeedFindByID(ctx, feed.ID())
+	foundFeed, err := store.FeedFindByID(ctx, feed.GetID())
 	if err != nil {
 		t.Fatalf("FeedFindByID before soft delete failed: %v", err)
 	}
@@ -439,12 +439,12 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	if feed.GetSoftDeletedAtCarbon().Gt(carbon.Now()) {
 		t.Errorf("SoftDeletedAt should be in the past after soft delete in object, but was %s", feed.GetSoftDeletedAtCarbon())
 	}
-	if initialUpdatedAt == feed.UpdatedAt() {
+	if initialUpdatedAt == feed.GetUpdatedAt() {
 		t.Error("UpdatedAt should have changed after soft delete")
 	}
 
 	// 5. Verify it's not found by default FindByID
-	foundFeed, err = store.FeedFindByID(ctx, feed.ID())
+	foundFeed, err = store.FeedFindByID(ctx, feed.GetID())
 	if err != nil {
 		t.Fatalf("FeedFindByID after soft delete failed: %v", err)
 	}
@@ -453,7 +453,7 @@ func TestStoreFeedSoftDelete(t *testing.T) {
 	}
 
 	// 6. Verify it IS found when including soft deleted
-	list, err := store.FeedList(ctx, FeedQuery().SetID(feed.ID()).SetWithSoftDeleted(true))
+	list, err := store.FeedList(ctx, FeedQuery().SetID(feed.GetID()).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("FeedList with soft deleted failed: %v", err)
 	}
@@ -483,7 +483,7 @@ func TestStoreFeedSoftDeleteByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FeedCreate failed: %v", err)
 	}
-	feedID := feed.ID()
+	feedID := feed.GetID()
 
 	// 2. Verify it exists and is not soft deleted
 	foundFeed, err := store.FeedFindByID(ctx, feedID)
@@ -552,8 +552,8 @@ func TestStoreFeedUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FeedCreate failed: %v", err)
 	}
-	feedID := feed.ID()
-	initialUpdatedAt := feed.UpdatedAt()
+	feedID := feed.GetID()
+	initialUpdatedAt := feed.GetUpdatedAt()
 
 	// 2. Modify the feed object
 	newName := "Updated Name"
@@ -572,10 +572,10 @@ func TestStoreFeedUpdate(t *testing.T) {
 
 	// 4. Verify the object is marked as not dirty
 	// DataChanged() method not available in neat ORM - test skipped
-	if initialUpdatedAt == feed.UpdatedAt() {
+	if initialUpdatedAt == feed.GetUpdatedAt() {
 		t.Error("UpdatedAt should have changed after update")
 	}
-	updatedAtAfterUpdate := feed.UpdatedAt() // Store for next check
+	updatedAtAfterUpdate := feed.GetUpdatedAt() // Store for next check
 
 	// 5. Retrieve the feed and verify changes
 	updatedFeed, err := store.FeedFindByID(ctx, feedID)
@@ -585,17 +585,17 @@ func TestStoreFeedUpdate(t *testing.T) {
 	if updatedFeed == nil {
 		t.Fatal("Updated feed not found")
 	}
-	if updatedFeed.Name() != newName {
-		t.Errorf("Name update failed: expected '%s', got '%s'", newName, updatedFeed.Name())
+	if updatedFeed.GetName() != newName {
+		t.Errorf("Name update failed: expected '%s', got '%s'", newName, updatedFeed.GetName())
 	}
-	if updatedFeed.Status() != newStatus {
-		t.Errorf("Status update failed: expected '%s', got '%s'", newStatus, updatedFeed.Status())
+	if updatedFeed.GetStatus() != newStatus {
+		t.Errorf("Status update failed: expected '%s', got '%s'", newStatus, updatedFeed.GetStatus())
 	}
-	if updatedFeed.Memo() != newMemo {
-		t.Errorf("Memo update failed: expected '%s', got '%s'", newMemo, updatedFeed.Memo())
+	if updatedFeed.GetMemo() != newMemo {
+		t.Errorf("Memo update failed: expected '%s', got '%s'", newMemo, updatedFeed.GetMemo())
 	}
-	if strings.ReplaceAll(updatedFeed.UpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
-		t.Errorf("UpdatedAt mismatch: expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(updatedFeed.UpdatedAt(), " +0000 UTC", ""))
+	if strings.ReplaceAll(updatedFeed.GetUpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
+		t.Errorf("UpdatedAt mismatch: expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(updatedFeed.GetUpdatedAt(), " +0000 UTC", ""))
 	}
 
 	// 6. Test updating with no changes
@@ -613,8 +613,8 @@ func TestStoreFeedUpdate(t *testing.T) {
 	if finalFeed == nil {
 		t.Fatal("Feed not found after no-change update")
 	}
-	if strings.ReplaceAll(finalFeed.UpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
-		t.Errorf("UpdatedAt should not change if no fields were modified, expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(finalFeed.UpdatedAt(), " +0000 UTC", ""))
+	if strings.ReplaceAll(finalFeed.GetUpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
+		t.Errorf("UpdatedAt should not change if no fields were modified, expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(finalFeed.GetUpdatedAt(), " +0000 UTC", ""))
 	}
 
 	// 7. Test updating nil feed
@@ -1107,7 +1107,7 @@ func TestStoreLinkUpdate(t *testing.T) {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 	linkID := link.ID()
-	initialUpdatedAt := link.UpdatedAt()
+	initialUpdatedAt := link.GetUpdatedAt()
 
 	// 2. Modify the link object
 	newTitle := "Updated Title"
@@ -1126,10 +1126,10 @@ func TestStoreLinkUpdate(t *testing.T) {
 
 	// 4. Verify the object is marked as not dirty
 	// DataChanged() method not available in neat ORM - test skipped
-	if initialUpdatedAt == link.UpdatedAt() {
+	if initialUpdatedAt == link.GetUpdatedAt() {
 		t.Error("UpdatedAt should have changed after update")
 	}
-	updatedAtAfterUpdate := link.UpdatedAt() // Store for next check
+	updatedAtAfterUpdate := link.GetUpdatedAt() // Store for next check
 
 	// 5. Retrieve the link and verify changes
 	updatedLink, err := store.LinkFindByID(ctx, linkID)
@@ -1139,17 +1139,17 @@ func TestStoreLinkUpdate(t *testing.T) {
 	if updatedLink == nil {
 		t.Fatal("Updated link not found")
 	}
-	if updatedLink.Title() != newTitle {
-		t.Errorf("Title update failed: expected '%s', got '%s'", newTitle, updatedLink.Title())
+	if updatedLink.GetTitle() != newTitle {
+		t.Errorf("Title update failed: expected '%s', got '%s'", newTitle, updatedLink.GetTitle())
 	}
-	if updatedLink.Status() != newStatus {
-		t.Errorf("Status update failed: expected '%s', got '%s'", newStatus, updatedLink.Status())
+	if updatedLink.GetStatus() != newStatus {
+		t.Errorf("Status update failed: expected '%s', got '%s'", newStatus, updatedLink.GetStatus())
 	}
-	if updatedLink.URL() != newURL {
-		t.Errorf("URL update failed: expected '%s', got '%s'", newURL, updatedLink.URL())
+	if updatedLink.GetURL() != newURL {
+		t.Errorf("URL update failed: expected '%s', got '%s'", newURL, updatedLink.GetURL())
 	}
-	if strings.ReplaceAll(updatedLink.UpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
-		t.Errorf("UpdatedAt mismatch: expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(updatedLink.UpdatedAt(), " +0000 UTC", ""))
+	if strings.ReplaceAll(updatedLink.GetUpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
+		t.Errorf("UpdatedAt mismatch: expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(updatedLink.GetUpdatedAt(), " +0000 UTC", ""))
 	}
 
 	// 6. Test updating with no changes
@@ -1166,8 +1166,8 @@ func TestStoreLinkUpdate(t *testing.T) {
 	if finalLink == nil {
 		t.Fatal("Link not found after no-change update")
 	}
-	if strings.ReplaceAll(finalLink.UpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
-		t.Errorf("UpdatedAt should not change if no fields were modified, expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(finalLink.UpdatedAt(), " +0000 UTC", ""))
+	if strings.ReplaceAll(finalLink.GetUpdatedAt(), " +0000 UTC", "") != updatedAtAfterUpdate {
+		t.Errorf("UpdatedAt should not change if no fields were modified, expected '%s', got '%s'", updatedAtAfterUpdate, strings.ReplaceAll(finalLink.GetUpdatedAt(), " +0000 UTC", ""))
 	}
 
 	// 7. Test updating nil link

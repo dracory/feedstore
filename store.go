@@ -3,6 +3,7 @@ package feedstore
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -78,6 +79,24 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 		if st.debugEnabled {
 			st.logger.Info("MigrateUp: feed table already exists", "table", st.feedTableName)
 		}
+
+		// Upgrade path: add columns introduced after the table was created
+		if !st.db.Schema().HasColumn(st.feedTableName, COLUMN_LANGUAGE) {
+			err := st.db.Schema().Table(st.feedTableName, func(table contractsschema.Blueprint) {
+				table.String(COLUMN_LANGUAGE, 10).Nullable()
+			})
+			if err != nil {
+				return err
+			}
+		}
+		if !st.db.Schema().HasColumn(st.feedTableName, COLUMN_METAS) {
+			err := st.db.Schema().Table(st.feedTableName, func(table contractsschema.Blueprint) {
+				table.LongText(COLUMN_METAS).Nullable()
+			})
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		err := st.db.Schema().Create(st.feedTableName, func(table contractsschema.Blueprint) {
 			table.String(COLUMN_ID, 9)
@@ -88,7 +107,9 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 			table.String(COLUMN_STATUS, 50)
 			table.String(COLUMN_FETCH_INTERVAL, 50)
 			table.DateTime(COLUMN_LAST_FETCHED_AT).Nullable()
+			table.String(COLUMN_LANGUAGE, 10).Nullable()
 			table.Text(COLUMN_MEMO).Nullable()
+			table.LongText(COLUMN_METAS).Nullable()
 			table.DateTime(COLUMN_CREATED_AT)
 			table.DateTime(COLUMN_UPDATED_AT)
 			table.DateTime(COLUMN_SOFT_DELETED_AT)
@@ -105,6 +126,24 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 	if st.db.Schema().HasTable(st.linkTableName) {
 		if st.debugEnabled {
 			st.logger.Info("MigrateUp: link table already exists", "table", st.linkTableName)
+		}
+
+		// Upgrade path: add columns introduced after the table was created
+		if !st.db.Schema().HasColumn(st.linkTableName, COLUMN_LANGUAGE) {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.String(COLUMN_LANGUAGE, 10).Nullable()
+			})
+			if err != nil {
+				return err
+			}
+		}
+		if !st.db.Schema().HasColumn(st.linkTableName, COLUMN_METAS) {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.LongText(COLUMN_METAS).Nullable()
+			})
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		err := st.db.Schema().Create(st.linkTableName, func(table contractsschema.Blueprint) {
@@ -125,6 +164,8 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 			table.Text(COLUMN_REPORT).Nullable()
 			table.DateTime(COLUMN_CHECKED_AT).Nullable()
 			table.DateTime(COLUMN_TIME).Nullable()
+			table.String(COLUMN_LANGUAGE, 10).Nullable()
+			table.LongText(COLUMN_METAS).Nullable()
 			table.DateTime(COLUMN_CREATED_AT)
 			table.DateTime(COLUMN_UPDATED_AT)
 			table.DateTime(COLUMN_SOFT_DELETED_AT)
@@ -230,9 +271,12 @@ func (st *storeImplementation) FeedCreate(ctx context.Context, feed FeedInterfac
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 
 	// Convert feed implementation to map for neat
-	data := st.feedToMap(feed)
+	data, err := st.feedToMap(feed)
+	if err != nil {
+		return err
+	}
 
-	err := st.db.Query().Table(st.feedTableName).Create(data)
+	err = st.db.Query().Table(st.feedTableName).Create(data)
 	if err != nil {
 		return err
 	}
@@ -246,7 +290,7 @@ func (st *storeImplementation) FeedDelete(ctx context.Context, feed FeedInterfac
 		return errors.New("feed is nil")
 	}
 
-	return st.FeedDeleteByID(ctx, feed.ID())
+	return st.FeedDeleteByID(ctx, feed.GetID())
 }
 
 func (st *storeImplementation) FeedDeleteByID(ctx context.Context, id string) error {
@@ -325,7 +369,10 @@ func (st *storeImplementation) FeedUpdate(ctx context.Context, feed FeedInterfac
 		return errors.New("feed is nil")
 	}
 
-	data := st.feedToMap(feed)
+	data, err := st.feedToMap(feed)
+	if err != nil {
+		return err
+	}
 	delete(data, COLUMN_ID) // ID is not updateable
 
 	// Check if any meaningful field has changed
@@ -347,10 +394,13 @@ func (st *storeImplementation) FeedUpdate(ctx context.Context, feed FeedInterfac
 	}
 
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	data = st.feedToMap(feed)
+	data, err = st.feedToMap(feed)
+	if err != nil {
+		return err
+	}
 	delete(data, COLUMN_ID) // ID is not updateable
 
-	_, err := st.db.Query().Table(st.feedTableName).Where("id = ?", feed.ID()).Update(data)
+	_, err = st.db.Query().Table(st.feedTableName).Where("id = ?", feed.GetID()).Update(data)
 	if err != nil {
 		return err
 	}
@@ -388,9 +438,12 @@ func (st *storeImplementation) LinkCreate(ctx context.Context, link LinkInterfac
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 
-	data := st.linkToMap(link)
+	data, err := st.linkToMap(link)
+	if err != nil {
+		return err
+	}
 
-	err := st.db.Query().Table(st.linkTableName).Create(data)
+	err = st.db.Query().Table(st.linkTableName).Create(data)
 	if err != nil {
 		return err
 	}
@@ -404,7 +457,7 @@ func (st *storeImplementation) LinkDelete(ctx context.Context, link LinkInterfac
 		return errors.New("link is nil")
 	}
 
-	return st.LinkDeleteByID(ctx, link.ID())
+	return st.LinkDeleteByID(ctx, link.GetID())
 }
 
 func (st *storeImplementation) LinkDeleteByID(ctx context.Context, id string) error {
@@ -483,7 +536,10 @@ func (st *storeImplementation) LinkUpdate(ctx context.Context, link LinkInterfac
 		return errors.New("link is nil")
 	}
 
-	data := st.linkToMap(link)
+	data, err := st.linkToMap(link)
+	if err != nil {
+		return err
+	}
 	delete(data, COLUMN_ID) // ID is not updateable
 
 	// Check if any meaningful field has changed
@@ -505,10 +561,13 @@ func (st *storeImplementation) LinkUpdate(ctx context.Context, link LinkInterfac
 	}
 
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
-	data = st.linkToMap(link)
+	data, err = st.linkToMap(link)
+	if err != nil {
+		return err
+	}
 	delete(data, COLUMN_ID) // ID is not updateable
 
-	_, err := st.db.Query().Table(st.linkTableName).Where("id = ?", link.ID()).Update(data)
+	_, err = st.db.Query().Table(st.linkTableName).Where("id = ?", link.GetID()).Update(data)
 	if err != nil {
 		return err
 	}
@@ -560,6 +619,11 @@ func (st *storeImplementation) buildFeedQuery(query FeedQueryInterface) contract
 
 	if query.IsUpdatedAtLteSet() {
 		q = q.Where("updated_at <= ?", query.GetUpdatedAtLte())
+	}
+
+	// Language filter
+	if query.IsLanguageSet() {
+		q = q.Where("language = ?", query.GetLanguage())
 	}
 
 	// Last Fetched At filters
@@ -629,6 +693,11 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 	// Status IN filter
 	if query.IsStatusInSet() {
 		q = q.WhereIn("status", lo.ToAnySlice(query.GetStatusIn()))
+	}
+
+	// Language filter
+	if query.IsLanguageSet() {
+		q = q.Where("language = ?", query.GetLanguage())
 	}
 
 	// URL filter
@@ -704,44 +773,68 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 // == HELPERS
 // ============================================================================
 
-func (st *storeImplementation) feedToMap(feed FeedInterface) map[string]any {
-	return map[string]any{
-		COLUMN_ID:              feed.ID(),
-		COLUMN_NAME:            feed.Name(),
-		COLUMN_DESCRIPTION:     feed.Description(),
-		COLUMN_URL:             feed.URL(),
-		COLUMN_STATUS:          feed.Status(),
-		COLUMN_FETCH_INTERVAL:  feed.FetchInterval(),
-		COLUMN_LAST_FETCHED_AT: feed.LastFetchedAt(),
-		COLUMN_MEMO:            feed.Memo(),
-		COLUMN_CREATED_AT:      feed.CreatedAt(),
-		COLUMN_UPDATED_AT:      feed.UpdatedAt(),
-		COLUMN_SOFT_DELETED_AT: feed.GetSoftDeletedAt(),
+func (st *storeImplementation) feedToMap(feed FeedInterface) (map[string]any, error) {
+	metas, err := feed.GetMetas()
+	if err != nil {
+		return nil, err
 	}
+
+	metasBytes, err := json.Marshal(metas)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		COLUMN_ID:              feed.GetID(),
+		COLUMN_NAME:            feed.GetName(),
+		COLUMN_DESCRIPTION:     feed.GetDescription(),
+		COLUMN_URL:             feed.GetURL(),
+		COLUMN_STATUS:          feed.GetStatus(),
+		COLUMN_FETCH_INTERVAL:  feed.GetFetchInterval(),
+		COLUMN_LAST_FETCHED_AT: feed.GetLastFetchedAt(),
+		COLUMN_LANGUAGE:        feed.GetLanguage(),
+		COLUMN_MEMO:            feed.GetMemo(),
+		COLUMN_METAS:           string(metasBytes),
+		COLUMN_CREATED_AT:      feed.GetCreatedAt(),
+		COLUMN_UPDATED_AT:      feed.GetUpdatedAt(),
+		COLUMN_SOFT_DELETED_AT: feed.GetSoftDeletedAt(),
+	}, nil
 }
 
-func (st *storeImplementation) linkToMap(link LinkInterface) map[string]any {
-	return map[string]any{
-		COLUMN_ID:              link.ID(),
-		COLUMN_FEED_ID:         link.FeedID(),
-		COLUMN_STATUS:          link.Status(),
-		COLUMN_TITLE:           link.Title(),
-		COLUMN_DESCRIPTION:     link.Description(),
-		COLUMN_CONTENT:         link.Content(),
-		COLUMN_AUTHOR:          link.Author(),
-		COLUMN_PRIORITY:        priorityToStr(link.Priority()),
-		COLUMN_URL:             link.URL(),
-		COLUMN_VIEWS:           link.Views(),
-		COLUMN_VOTES_UP:        link.VotesUp(),
-		COLUMN_VOTES_DOWN:      link.VotesDown(),
-		COLUMN_REPORTED_AT:     link.ReportedAt(),
-		COLUMN_REPORT:          link.Report(),
-		COLUMN_CHECKED_AT:      link.CheckedAt(),
-		COLUMN_TIME:            link.Time(),
-		COLUMN_CREATED_AT:      link.CreatedAt(),
-		COLUMN_UPDATED_AT:      link.UpdatedAt(),
-		COLUMN_SOFT_DELETED_AT: link.GetSoftDeletedAt(),
+func (st *storeImplementation) linkToMap(link LinkInterface) (map[string]any, error) {
+	metas, err := link.GetMetas()
+	if err != nil {
+		return nil, err
 	}
+
+	metasBytes, err := json.Marshal(metas)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]any{
+		COLUMN_ID:              link.GetID(),
+		COLUMN_FEED_ID:         link.GetFeedID(),
+		COLUMN_STATUS:          link.GetStatus(),
+		COLUMN_TITLE:           link.GetTitle(),
+		COLUMN_DESCRIPTION:     link.GetDescription(),
+		COLUMN_CONTENT:         link.GetContent(),
+		COLUMN_AUTHOR:          link.GetAuthor(),
+		COLUMN_PRIORITY:        priorityToStr(link.GetPriority()),
+		COLUMN_URL:             link.GetURL(),
+		COLUMN_VIEWS:           link.GetViews(),
+		COLUMN_VOTES_UP:        link.GetVotesUp(),
+		COLUMN_VOTES_DOWN:      link.GetVotesDown(),
+		COLUMN_REPORTED_AT:     link.GetReportedAt(),
+		COLUMN_REPORT:          link.GetReport(),
+		COLUMN_CHECKED_AT:      link.GetCheckedAt(),
+		COLUMN_TIME:            link.GetTime(),
+		COLUMN_LANGUAGE:        link.GetLanguage(),
+		COLUMN_METAS:           string(metasBytes),
+		COLUMN_CREATED_AT:      link.GetCreatedAt(),
+		COLUMN_UPDATED_AT:      link.GetUpdatedAt(),
+		COLUMN_SOFT_DELETED_AT: link.GetSoftDeletedAt(),
+	}, nil
 }
 
 func (st *storeImplementation) mapToFeed(data map[string]any) FeedInterface {

@@ -1,6 +1,7 @@
 package feedstore
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/dracory/neat"
@@ -32,6 +33,8 @@ type linkImplementation struct {
 	ReportField      string    `db:"report"`
 	CheckedAtField   time.Time `db:"checked_at"`
 	TimeField        time.Time `db:"time"`
+	LanguageField    string    `db:"language"`
+	MetasField       string    `db:"metas"`
 	CreatedAtField   orm.CreatedAt
 	UpdatedAtField   orm.UpdatedAt
 	soft_delete.SoftDeletesMaxDate
@@ -47,51 +50,59 @@ type LinkInterface interface {
 	Data() map[string]string
 	MarkAsNotDirty(...string)
 
-	CreatedAt() string
-	CreatedAtCarbon() *carbon.Carbon
+	// Creation and update timestamps
+	GetCreatedAt() string
+	GetCreatedAtCarbon() *carbon.Carbon
 	SetCreatedAt(createdAt string) LinkInterface
-	Description() string
+	GetDescription() string
 	SetDescription(description string) LinkInterface
-	Content() string
+	GetContent() string
 	SetContent(content string) LinkInterface
-	Author() string
+	GetAuthor() string
 	SetAuthor(author string) LinkInterface
-	Priority() bool
+	GetPriority() bool
 	SetPriority(priority bool) LinkInterface
-	FeedID() string
+	GetFeedID() string
 	SetFeedID(feedID string) LinkInterface
-	ID() string
+	GetID() string
 	SetID(id string) LinkInterface
-	Status() string
+	GetLanguage() string
+	SetLanguage(language string) LinkInterface
+	GetMeta(key string) (string, error)
+	SetMeta(key string, value string) error
+	DeleteMeta(key string) error
+	GetMetas() (map[string]string, error)
+	SetMetas(metas map[string]string) error
+	GetStatus() string
 	SetStatus(status string) LinkInterface
-	Title() string
+	GetTitle() string
 	SetTitle(title string) LinkInterface
-	Time() string
-	TimeCarbon() *carbon.Carbon
+	GetTime() string
+	GetTimeCarbon() *carbon.Carbon
 	SetTime(time time.Time) LinkInterface
 	SetTimeString(time string) LinkInterface
 	GetSoftDeletedAt() string
 	GetSoftDeletedAtCarbon() *carbon.Carbon
 	SetSoftDeletedAt(softDeletedAt string) LinkInterface
-	UpdatedAt() string
-	UpdatedAtCarbon() *carbon.Carbon
+	GetUpdatedAt() string
+	GetUpdatedAtCarbon() *carbon.Carbon
 	SetUpdatedAt(updatedAt string) LinkInterface
-	URL() string
+	GetURL() string
 	SetURL(url string) LinkInterface
-	Views() string
+	GetViews() string
 	SetViews(views string) LinkInterface
-	VotesUp() string
+	GetVotesUp() string
 	SetVotesUp(votesUp string) LinkInterface
-	VotesDown() string
+	GetVotesDown() string
 	SetVotesDown(votesDown string) LinkInterface
-	Report() string
+	GetReport() string
 	SetReport(report string) LinkInterface
-	ReportedAt() string
-	ReportedAtCarbon() *carbon.Carbon
+	GetReportedAt() string
+	GetReportedAtCarbon() *carbon.Carbon
 	SetReportedAt(reportedAt time.Time) LinkInterface
 	SetReportedAtString(reportedAt string) LinkInterface
-	CheckedAt() string
-	CheckedAtCarbon() *carbon.Carbon
+	GetCheckedAt() string
+	GetCheckedAtCarbon() *carbon.Carbon
 	SetCheckedAt(timeChecked time.Time) LinkInterface
 	SetCheckedAtString(timeChecked string) LinkInterface
 }
@@ -116,6 +127,8 @@ func NewLink() *linkImplementation {
 	link.SetReport("")
 	link.SetCheckedAtString(neat.NullDateTime)
 	link.SetTimeString(neat.NullDateTime)
+	link.SetLanguage("")
+	_ = link.SetMetas(map[string]string{})
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	link.SetSoftDeletedAt(neat.MaxDateTime)
@@ -154,6 +167,12 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 	if v, ok := data[COLUMN_TIME]; ok {
 		link.SetTimeString(v)
 	}
+	if v, ok := data[COLUMN_LANGUAGE]; ok {
+		link.SetLanguage(v)
+	}
+	if v, ok := data[COLUMN_METAS]; ok {
+		link.MetasField = v
+	}
 	if v, ok := data[COLUMN_CREATED_AT]; ok {
 		link.SetCreatedAt(v)
 	}
@@ -170,14 +189,14 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 
 // == SETTERS AND GETTERS =====================================================
 
-func (link *linkImplementation) CheckedAt() string {
+func (link *linkImplementation) GetCheckedAt() string {
 	if link.CheckedAtField.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.CheckedAtField).ToDateTimeString()
 }
 
-func (link *linkImplementation) CheckedAtCarbon() *carbon.Carbon {
+func (link *linkImplementation) GetCheckedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(link.CheckedAtField)
 }
 
@@ -195,14 +214,14 @@ func (link *linkImplementation) SetCheckedAtString(timeChecked string) LinkInter
 	return link
 }
 
-func (link *linkImplementation) CreatedAt() string {
+func (link *linkImplementation) GetCreatedAt() string {
 	if link.CreatedAtField.CreatedAt.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.CreatedAtField.CreatedAt).ToDateTimeString()
 }
 
-func (link *linkImplementation) CreatedAtCarbon() *carbon.Carbon {
+func (link *linkImplementation) GetCreatedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(link.CreatedAtField.CreatedAt)
 }
 
@@ -215,7 +234,7 @@ func (link *linkImplementation) SetCreatedAt(createdAt string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Description() string {
+func (link *linkImplementation) GetDescription() string {
 	return link.DescriptionField
 }
 
@@ -224,7 +243,7 @@ func (link *linkImplementation) SetDescription(description string) LinkInterface
 	return link
 }
 
-func (link *linkImplementation) Content() string {
+func (link *linkImplementation) GetContent() string {
 	return link.ContentField
 }
 
@@ -233,7 +252,7 @@ func (link *linkImplementation) SetContent(content string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Author() string {
+func (link *linkImplementation) GetAuthor() string {
 	return link.AuthorField
 }
 
@@ -242,7 +261,7 @@ func (link *linkImplementation) SetAuthor(author string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Priority() bool {
+func (link *linkImplementation) GetPriority() bool {
 	return link.PriorityField == "1" || link.PriorityField == "true"
 }
 
@@ -255,7 +274,7 @@ func (link *linkImplementation) SetPriority(priority bool) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) FeedID() string {
+func (link *linkImplementation) GetFeedID() string {
 	return link.FeedIDField
 }
 
@@ -264,7 +283,7 @@ func (link *linkImplementation) SetFeedID(feedID string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) ID() string {
+func (link *linkImplementation) GetID() string {
 	return link.ShortID.ID
 }
 
@@ -273,7 +292,67 @@ func (link *linkImplementation) SetID(id string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Status() string {
+func (link *linkImplementation) GetLanguage() string {
+	return link.LanguageField
+}
+
+func (link *linkImplementation) SetLanguage(language string) LinkInterface {
+	link.LanguageField = language
+	return link
+}
+
+func (link *linkImplementation) GetMeta(key string) (string, error) {
+	metas, err := link.GetMetas()
+	if err != nil {
+		return "", err
+	}
+	value, ok := metas[key]
+	if !ok {
+		return "", nil
+	}
+	return value, nil
+}
+
+func (link *linkImplementation) SetMeta(key string, value string) error {
+	metas, err := link.GetMetas()
+	if err != nil {
+		return err
+	}
+	metas[key] = value
+	return link.SetMetas(metas)
+}
+
+func (link *linkImplementation) DeleteMeta(key string) error {
+	metas, err := link.GetMetas()
+	if err != nil {
+		return err
+	}
+	delete(metas, key)
+	return link.SetMetas(metas)
+}
+
+func (link *linkImplementation) GetMetas() (map[string]string, error) {
+	if link.MetasField == "" {
+		return map[string]string{}, nil
+	}
+	var metas map[string]string
+	err := json.Unmarshal([]byte(link.MetasField), &metas)
+	if err != nil {
+		return map[string]string{}, err
+	}
+	return metas, nil
+}
+
+func (link *linkImplementation) SetMetas(metas map[string]string) error {
+	metasBytes, err := json.Marshal(metas)
+	if err != nil {
+		return err
+	}
+	link.MetasField = string(metasBytes)
+	return nil
+}
+
+func (link *linkImplementation) GetStatus() string {
 	return link.StatusField
 }
 
@@ -282,7 +361,7 @@ func (link *linkImplementation) SetStatus(status string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Title() string {
+func (link *linkImplementation) GetTitle() string {
 	return link.TitleField
 }
 
@@ -291,7 +370,7 @@ func (link *linkImplementation) SetTitle(title string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) URL() string {
+func (link *linkImplementation) GetURL() string {
 	return link.URLField
 }
 
@@ -300,7 +379,7 @@ func (link *linkImplementation) SetURL(url string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) VotesDown() string {
+func (link *linkImplementation) GetVotesDown() string {
 	return link.VotesDownField
 }
 
@@ -309,7 +388,7 @@ func (link *linkImplementation) SetVotesDown(votesDown string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) VotesUp() string {
+func (link *linkImplementation) GetVotesUp() string {
 	return link.VotesUpField
 }
 
@@ -318,7 +397,7 @@ func (link *linkImplementation) SetVotesUp(votesUp string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Views() string {
+func (link *linkImplementation) GetViews() string {
 	return link.ViewsField
 }
 
@@ -327,7 +406,7 @@ func (link *linkImplementation) SetViews(views string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) Report() string {
+func (link *linkImplementation) GetReport() string {
 	return link.ReportField
 }
 
@@ -336,14 +415,14 @@ func (link *linkImplementation) SetReport(report string) LinkInterface {
 	return link
 }
 
-func (link *linkImplementation) ReportedAt() string {
+func (link *linkImplementation) GetReportedAt() string {
 	if link.ReportedAtField.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.ReportedAtField).ToDateTimeString()
 }
 
-func (link *linkImplementation) ReportedAtCarbon() *carbon.Carbon {
+func (link *linkImplementation) GetReportedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(link.ReportedAtField)
 }
 
@@ -361,14 +440,14 @@ func (link *linkImplementation) SetReportedAtString(reportedAt string) LinkInter
 	return link
 }
 
-func (link *linkImplementation) Time() string {
+func (link *linkImplementation) GetTime() string {
 	if link.TimeField.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.TimeField).ToDateTimeString()
 }
 
-func (link *linkImplementation) TimeCarbon() *carbon.Carbon {
+func (link *linkImplementation) GetTimeCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(link.TimeField)
 }
 
@@ -405,14 +484,14 @@ func (link *linkImplementation) SetSoftDeletedAt(softDeletedAt string) LinkInter
 	return link
 }
 
-func (link *linkImplementation) UpdatedAt() string {
+func (link *linkImplementation) GetUpdatedAt() string {
 	if link.UpdatedAtField.UpdatedAt.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(link.UpdatedAtField.UpdatedAt).ToDateTimeString()
 }
 
-func (link *linkImplementation) UpdatedAtCarbon() *carbon.Carbon {
+func (link *linkImplementation) GetUpdatedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(link.UpdatedAtField.UpdatedAt)
 }
 
@@ -427,24 +506,26 @@ func (link *linkImplementation) SetUpdatedAt(updatedAt string) LinkInterface {
 
 func (link *linkImplementation) Data() map[string]string {
 	data := map[string]string{}
-	data[COLUMN_ID] = link.ID()
-	data[COLUMN_FEED_ID] = link.FeedID()
-	data[COLUMN_STATUS] = link.Status()
-	data[COLUMN_TITLE] = link.Title()
-	data[COLUMN_DESCRIPTION] = link.Description()
-	data[COLUMN_CONTENT] = link.Content()
-	data[COLUMN_AUTHOR] = link.Author()
+	data[COLUMN_ID] = link.GetID()
+	data[COLUMN_FEED_ID] = link.GetFeedID()
+	data[COLUMN_STATUS] = link.GetStatus()
+	data[COLUMN_TITLE] = link.GetTitle()
+	data[COLUMN_DESCRIPTION] = link.GetDescription()
+	data[COLUMN_CONTENT] = link.GetContent()
+	data[COLUMN_AUTHOR] = link.GetAuthor()
 	data[COLUMN_PRIORITY] = link.PriorityField
-	data[COLUMN_URL] = link.URL()
-	data[COLUMN_VIEWS] = link.Views()
-	data[COLUMN_VOTES_UP] = link.VotesUp()
-	data[COLUMN_VOTES_DOWN] = link.VotesDown()
-	data[COLUMN_REPORTED_AT] = link.ReportedAt()
-	data[COLUMN_REPORT] = link.Report()
-	data[COLUMN_CHECKED_AT] = link.CheckedAt()
-	data[COLUMN_TIME] = link.Time()
-	data[COLUMN_CREATED_AT] = link.CreatedAt()
-	data[COLUMN_UPDATED_AT] = link.UpdatedAt()
+	data[COLUMN_URL] = link.GetURL()
+	data[COLUMN_VIEWS] = link.GetViews()
+	data[COLUMN_VOTES_UP] = link.GetVotesUp()
+	data[COLUMN_VOTES_DOWN] = link.GetVotesDown()
+	data[COLUMN_REPORTED_AT] = link.GetReportedAt()
+	data[COLUMN_REPORT] = link.GetReport()
+	data[COLUMN_CHECKED_AT] = link.GetCheckedAt()
+	data[COLUMN_TIME] = link.GetTime()
+	data[COLUMN_LANGUAGE] = link.GetLanguage()
+	data[COLUMN_METAS] = link.MetasField
+	data[COLUMN_CREATED_AT] = link.GetCreatedAt()
+	data[COLUMN_UPDATED_AT] = link.GetUpdatedAt()
 	data[COLUMN_SOFT_DELETED_AT] = link.GetSoftDeletedAt()
 	return data
 }

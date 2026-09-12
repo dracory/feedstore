@@ -49,6 +49,10 @@ type LinkQueryInterface interface {
 	GetIDIn() []string
 	SetIDIn(ids []string) LinkQueryInterface
 
+	IsLanguageSet() bool
+	GetLanguage() string
+	SetLanguage(language string) LinkQueryInterface
+
 	IsLimitSet() bool
 	GetLimit() int
 	SetLimit(limit int) LinkQueryInterface
@@ -135,6 +139,9 @@ type linkQuery struct {
 	isIDInSet bool
 	idIn      []string
 
+	isLanguageSet bool
+	language      string
+
 	isLimitSet bool
 	limit      int
 
@@ -202,6 +209,10 @@ func (q *linkQuery) Validate() error {
 
 	if q.IsIDInSet() && len(q.GetIDIn()) < 1 {
 		return errors.New("document query: id_in cannot be empty array")
+	}
+
+	if q.IsLanguageSet() && q.GetLanguage() == "" {
+		return errors.New("document query: language cannot be empty")
 	}
 
 	if q.IsLimitSet() && q.GetLimit() < 0 {
@@ -362,6 +373,24 @@ func (q *linkQuery) GetIDIn() []string {
 func (q *linkQuery) SetIDIn(idIn []string) LinkQueryInterface {
 	q.isIDInSet = true
 	q.idIn = idIn
+	return q
+}
+
+func (q *linkQuery) IsLanguageSet() bool {
+	return q.isLanguageSet
+}
+
+func (q *linkQuery) GetLanguage() string {
+	if q.IsLanguageSet() {
+		return q.language
+	}
+
+	return ""
+}
+
+func (q *linkQuery) SetLanguage(language string) LinkQueryInterface {
+	q.isLanguageSet = true
+	q.language = language
 	return q
 }
 

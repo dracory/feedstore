@@ -69,16 +69,16 @@ go get github.com/dracory/feedstore
         log.Printf("⚠️ Failed to create feed: %v", err)
         return
     }
-    fmt.Printf("✅ Feed created successfully: ID=%s, Name=%s\n", feed1.ID(), feed1.Name())
+    fmt.Printf("✅ Feed created successfully: ID=%s, Name=%s\n", feed1.GetID(), feed1.GetName())
 
     // --- Find Feed by ID ---
-    foundFeed, err := store.FeedFindByID(feed1.ID())
+    foundFeed, err := store.FeedFindByID(feed1.GetID())
     if err != nil {
-        log.Printf("⚠️ Error finding feed %s: %v", feed1.ID(), err)
+        log.Printf("⚠️ Error finding feed %s: %v", feed1.GetID(), err)
     } else if foundFeed == nil {
-        fmt.Printf("ℹ️ Feed %s not found.\n", feed1.ID())
+        fmt.Printf("ℹ️ Feed %s not found.\n", feed1.GetID())
     } else {
-        fmt.Printf("✅ Found feed by ID: %s (Name: %s)\n", foundFeed.ID(), foundFeed.Name())
+        fmt.Printf("✅ Found feed by ID: %s (Name: %s)\n", foundFeed.GetID(), foundFeed.GetName())
     }
 
     // --- List Active Feeds ---
@@ -90,7 +90,7 @@ go get github.com/dracory/feedstore
     } else {
         fmt.Printf("✅ Found %d active feed(s):\n", len(activeFeeds))
         for _, f := range activeFeeds {
-            fmt.Printf("   - ID: %s, Name: %s, Status: %s\n", f.ID(), f.Name(), f.Status())
+            fmt.Printf("   - ID: %s, Name: %s, Status: %s\n", f.GetID(), f.GetName(), f.GetStatus())
         }
     }
 
@@ -98,13 +98,13 @@ go get github.com/dracory/feedstore
     foundFeed.SetMemo("This feed was updated.")
     err = store.FeedUpdate(foundFeed)
     if err != nil {
-        log.Printf("⚠️ Error updating feed %s: %v", foundFeed.ID(), err)
+        log.Printf("⚠️ Error updating feed %s: %v", foundFeed.GetID(), err)
     } else {
-        fmt.Printf("✅ Feed %s updated successfully.\n", foundFeed.ID())
+        fmt.Printf("✅ Feed %s updated successfully.\n", foundFeed.GetID())
         // Verify update
-        updatedFeed, _ := store.FeedFindByID(foundFeed.ID())
+        updatedFeed, _ := store.FeedFindByID(foundFeed.GetID())
         if updatedFeed != nil {
-            fmt.Printf("   Updated Memo: %s\n", updatedFeed.Memo())
+            fmt.Printf("   Updated Memo: %s\n", updatedFeed.GetMemo())
         }
     }
 
@@ -112,13 +112,13 @@ go get github.com/dracory/feedstore
     // Create another feed to delete
     feedToDelete := feedstore.NewFeed().SetName("Temporary Feed").SetURL("http://temp.com/rss")
     _ = store.FeedCreate(feedToDelete)
-    fmt.Printf("   Created temporary feed: %s\n", feedToDelete.ID())
+    fmt.Printf("   Created temporary feed: %s\n", feedToDelete.GetID())
 
-    err = store.FeedSoftDeleteByID(feedToDelete.ID())
+    err = store.FeedSoftDeleteByID(feedToDelete.GetID())
     if err != nil {
-        log.Printf("⚠️ Error soft deleting feed %s: %v", feedToDelete.ID(), err)
+        log.Printf("⚠️ Error soft deleting feed %s: %v", feedToDelete.GetID(), err)
     } else {
-        fmt.Printf("✅ Feed %s soft deleted.\n", feedToDelete.ID())
+        fmt.Printf("✅ Feed %s soft deleted.\n", feedToDelete.GetID())
     }
 ```
 

@@ -10,19 +10,19 @@ func TestLink_Priority_GettersSetters(t *testing.T) {
 	link := NewLink()
 
 	// Default should be false
-	if link.Priority() {
+	if link.GetPriority() {
 		t.Error("expected Priority=false on new link")
 	}
 
 	// Set to true
 	link.SetPriority(true)
-	if !link.Priority() {
+	if !link.GetPriority() {
 		t.Error("expected Priority=true after SetPriority(true)")
 	}
 
 	// Set back to false
 	link.SetPriority(false)
-	if link.Priority() {
+	if link.GetPriority() {
 		t.Error("expected Priority=false after SetPriority(false)")
 	}
 }
@@ -72,11 +72,11 @@ func TestStore_LinkCreate_WithPriority(t *testing.T) {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 
-	found, err := store.LinkFindByID(ctx, link.ID())
+	found, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID failed: %v", err)
 	}
-	if !found.Priority() {
+	if !found.GetPriority() {
 		t.Error("expected Priority=true after create+find")
 	}
 }
@@ -104,11 +104,11 @@ func TestStore_LinkUpdate_WithPriority(t *testing.T) {
 		t.Fatalf("LinkUpdate failed: %v", err)
 	}
 
-	found, err := store.LinkFindByID(ctx, link.ID())
+	found, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID failed: %v", err)
 	}
-	if !found.Priority() {
+	if !found.GetPriority() {
 		t.Error("expected Priority=true after update")
 	}
 
@@ -118,11 +118,11 @@ func TestStore_LinkUpdate_WithPriority(t *testing.T) {
 		t.Fatalf("LinkUpdate failed: %v", err)
 	}
 
-	found, err = store.LinkFindByID(ctx, link.ID())
+	found, err = store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID failed: %v", err)
 	}
-	if found.Priority() {
+	if found.GetPriority() {
 		t.Error("expected Priority=false after second update")
 	}
 }
@@ -163,8 +163,8 @@ func TestStore_LinkList_FilterByPriority(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected 1 priority link, got %d", len(links))
 	}
-	if links[0].ID() != link2.ID() {
-		t.Errorf("expected link2 (priority), got %s", links[0].ID())
+	if links[0].GetID() != link2.GetID() {
+		t.Errorf("expected link2 (priority), got %s", links[0].GetID())
 	}
 
 	// Query non-priority (all without filter)
@@ -180,28 +180,28 @@ func TestStore_LinkList_FilterByPriority(t *testing.T) {
 // TestNewLinkFromExistingData_WithPriority verifies loading priority from DB data.
 func TestNewLinkFromExistingData_WithPriority(t *testing.T) {
 	data := map[string]string{
-		COLUMN_ID:          "test789",
-		COLUMN_FEED_ID:     "feedA",
-		COLUMN_STATUS:      LINK_STATUS_ACTIVE,
-		COLUMN_TITLE:       "Priority Test",
-		COLUMN_URL:         "https://example.com/test",
-		COLUMN_VIEWS:       "0",
-		COLUMN_VOTES_UP:    "0",
-		COLUMN_VOTES_DOWN:  "0",
-		COLUMN_TIME:        "2026-08-31 10:00:00",
-		COLUMN_CREATED_AT:  "2026-08-31 10:00:00",
-		COLUMN_UPDATED_AT:  "2026-08-31 10:00:00",
-		COLUMN_PRIORITY:    "1",
+		COLUMN_ID:         "test789",
+		COLUMN_FEED_ID:    "feedA",
+		COLUMN_STATUS:     LINK_STATUS_ACTIVE,
+		COLUMN_TITLE:      "Priority Test",
+		COLUMN_URL:        "https://example.com/test",
+		COLUMN_VIEWS:      "0",
+		COLUMN_VOTES_UP:   "0",
+		COLUMN_VOTES_DOWN: "0",
+		COLUMN_TIME:       "2026-08-31 10:00:00",
+		COLUMN_CREATED_AT: "2026-08-31 10:00:00",
+		COLUMN_UPDATED_AT: "2026-08-31 10:00:00",
+		COLUMN_PRIORITY:   "1",
 	}
 
 	link := NewLinkFromExistingData(data)
-	if !link.Priority() {
+	if !link.GetPriority() {
 		t.Error("expected Priority=true from data with priority=1")
 	}
 
 	data[COLUMN_PRIORITY] = "0"
 	link = NewLinkFromExistingData(data)
-	if link.Priority() {
+	if link.GetPriority() {
 		t.Error("expected Priority=false from data with priority=0")
 	}
 }

@@ -119,8 +119,8 @@ func TestStoreLinkList_TimeGteFilter(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected 1 link with TimeGte filter, got %d", len(links))
 	}
-	if links[0].ID() != linkRecent.ID() {
-		t.Errorf("expected linkRecent ID, got %s", links[0].ID())
+	if links[0].GetID() != linkRecent.GetID() {
+		t.Errorf("expected linkRecent ID, got %s", links[0].GetID())
 	}
 }
 
@@ -154,8 +154,8 @@ func TestStoreLinkList_TimeLteFilter(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected 1 link with TimeLte filter, got %d", len(links))
 	}
-	if links[0].ID() != linkOld.ID() {
-		t.Errorf("expected linkOld ID, got %s", links[0].ID())
+	if links[0].GetID() != linkOld.GetID() {
+		t.Errorf("expected linkOld ID, got %s", links[0].GetID())
 	}
 }
 
@@ -197,8 +197,8 @@ func TestStoreLinkList_TimeRangeFilter(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected 1 link in time range, got %d", len(links))
 	}
-	if links[0].ID() != linkInRange.ID() {
-		t.Errorf("expected linkInRange ID, got %s", links[0].ID())
+	if links[0].GetID() != linkInRange.GetID() {
+		t.Errorf("expected linkInRange ID, got %s", links[0].GetID())
 	}
 }
 
@@ -269,8 +269,8 @@ func TestStoreLinkList_TimeFilterWithOtherFilters(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected 1 link with combo filters, got %d", len(links))
 	}
-	if links[0].ID() != link2.ID() {
-		t.Errorf("expected link2 ID, got %s", links[0].ID())
+	if links[0].GetID() != link2.GetID() {
+		t.Errorf("expected link2 ID, got %s", links[0].GetID())
 	}
 }
 

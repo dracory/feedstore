@@ -45,6 +45,10 @@ type FeedQueryInterface interface {
 	GetIDIn() []string
 	SetIDIn(ids []string) FeedQueryInterface
 
+	IsLanguageSet() bool
+	GetLanguage() string
+	SetLanguage(language string) FeedQueryInterface
+
 	IsLastFetchedAtLteSet() bool
 	GetLastFetchedAtLte() string
 	SetLastFetchedAtLte(lastFetchedAtLte string) FeedQueryInterface
@@ -111,6 +115,9 @@ type feedQuery struct {
 
 	isIDInSet bool
 	idIn      []string
+
+	isLanguageSet bool
+	language      string
 
 	isLastFetchedAtLteSet bool
 	lastFetchedAtLte      string
@@ -179,6 +186,10 @@ func (q *feedQuery) Validate() error {
 
 	if q.IsIDInSet() && len(q.GetIDIn()) < 1 {
 		return errors.New("document query: id_in cannot be empty array")
+	}
+
+	if q.IsLanguageSet() && q.GetLanguage() == "" {
+		return errors.New("document query: language cannot be empty")
 	}
 
 	if q.IsLimitSet() && q.GetLimit() < 0 {
@@ -307,6 +318,24 @@ func (q *feedQuery) GetIDIn() []string {
 func (q *feedQuery) SetIDIn(idIn []string) FeedQueryInterface {
 	q.isIDInSet = true
 	q.idIn = idIn
+	return q
+}
+
+func (q *feedQuery) IsLanguageSet() bool {
+	return q.isLanguageSet
+}
+
+func (q *feedQuery) GetLanguage() string {
+	if q.IsLanguageSet() {
+		return q.language
+	}
+
+	return ""
+}
+
+func (q *feedQuery) SetLanguage(language string) FeedQueryInterface {
+	q.isLanguageSet = true
+	q.language = language
 	return q
 }
 

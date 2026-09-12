@@ -11,22 +11,22 @@ func TestLink_ContentAuthor_GettersSetters(t *testing.T) {
 	link := NewLink()
 
 	// Initially empty
-	if link.Content() != "" {
-		t.Errorf("expected empty Content on new link, got %q", link.Content())
+	if link.GetContent() != "" {
+		t.Errorf("expected empty Content on new link, got %q", link.GetContent())
 	}
-	if link.Author() != "" {
-		t.Errorf("expected empty Author on new link, got %q", link.Author())
+	if link.GetAuthor() != "" {
+		t.Errorf("expected empty Author on new link, got %q", link.GetAuthor())
 	}
 
 	// Set values
 	link.SetContent("This is the article content")
 	link.SetAuthor("John Doe")
 
-	if link.Content() != "This is the article content" {
-		t.Errorf("Content mismatch, got %q", link.Content())
+	if link.GetContent() != "This is the article content" {
+		t.Errorf("Content mismatch, got %q", link.GetContent())
 	}
-	if link.Author() != "John Doe" {
-		t.Errorf("Author mismatch, got %q", link.Author())
+	if link.GetAuthor() != "John Doe" {
+		t.Errorf("Author mismatch, got %q", link.GetAuthor())
 	}
 }
 
@@ -82,18 +82,18 @@ func TestStore_LinkCreate_WithContentAuthor(t *testing.T) {
 	}
 
 	// Retrieve and verify
-	found, err := store.LinkFindByID(ctx, link.ID())
+	found, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID failed: %v", err)
 	}
 	if found == nil {
 		t.Fatal("Link not found after creation")
 	}
-	if found.Content() != "Full article content here" {
-		t.Errorf("expected Content to be stored, got %q", found.Content())
+	if found.GetContent() != "Full article content here" {
+		t.Errorf("expected Content to be stored, got %q", found.GetContent())
 	}
-	if found.Author() != "Test Author" {
-		t.Errorf("expected Author to be stored, got %q", found.Author())
+	if found.GetAuthor() != "Test Author" {
+		t.Errorf("expected Author to be stored, got %q", found.GetAuthor())
 	}
 }
 
@@ -125,12 +125,12 @@ func TestStore_LinkCreate_LongContent(t *testing.T) {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
 
-	found, err := store.LinkFindByID(ctx, link.ID())
+	found, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID failed: %v", err)
 	}
-	if found.Content() != longContent {
-		t.Errorf("expected long content to be stored intact (len=%d), got len=%d", len(longContent), len(found.Content()))
+	if found.GetContent() != longContent {
+		t.Errorf("expected long content to be stored intact (len=%d), got len=%d", len(longContent), len(found.GetContent()))
 	}
 }
 
@@ -160,15 +160,15 @@ func TestStore_LinkUpdate_WithContentAuthor(t *testing.T) {
 	}
 
 	// Retrieve and verify
-	found, err := store.LinkFindByID(ctx, link.ID())
+	found, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID failed: %v", err)
 	}
-	if found.Content() != "Updated content" {
-		t.Errorf("expected updated Content, got %q", found.Content())
+	if found.GetContent() != "Updated content" {
+		t.Errorf("expected updated Content, got %q", found.GetContent())
 	}
-	if found.Author() != "Updated Author" {
-		t.Errorf("expected updated Author, got %q", found.Author())
+	if found.GetAuthor() != "Updated Author" {
+		t.Errorf("expected updated Author, got %q", found.GetAuthor())
 	}
 }
 
@@ -199,11 +199,11 @@ func TestStore_LinkList_WithContentAuthor(t *testing.T) {
 	if len(links) != 1 {
 		t.Fatalf("expected 1 link, got %d", len(links))
 	}
-	if links[0].Content() != "Content for list test" {
-		t.Errorf("expected Content in list result, got %q", links[0].Content())
+	if links[0].GetContent() != "Content for list test" {
+		t.Errorf("expected Content in list result, got %q", links[0].GetContent())
 	}
-	if links[0].Author() != "Author for list test" {
-		t.Errorf("expected Author in list result, got %q", links[0].Author())
+	if links[0].GetAuthor() != "Author for list test" {
+		t.Errorf("expected Author in list result, got %q", links[0].GetAuthor())
 	}
 }
 
@@ -229,11 +229,11 @@ func TestNewLinkFromExistingData_WithContentAuthor(t *testing.T) {
 
 	link := NewLinkFromExistingData(data)
 
-	if link.Content() != "Test content from data map" {
-		t.Errorf("expected Content from data map, got %q", link.Content())
+	if link.GetContent() != "Test content from data map" {
+		t.Errorf("expected Content from data map, got %q", link.GetContent())
 	}
-	if link.Author() != "Test author from data map" {
-		t.Errorf("expected Author from data map, got %q", link.Author())
+	if link.GetAuthor() != "Test author from data map" {
+		t.Errorf("expected Author from data map, got %q", link.GetAuthor())
 	}
 }
 
@@ -251,10 +251,10 @@ func TestNewLinkFromExistingData_MissingContentAuthor(t *testing.T) {
 
 	link := NewLinkFromExistingData(data)
 
-	if link.Content() != "" {
-		t.Errorf("expected empty Content when not in data, got %q", link.Content())
+	if link.GetContent() != "" {
+		t.Errorf("expected empty Content when not in data, got %q", link.GetContent())
 	}
-	if link.Author() != "" {
-		t.Errorf("expected empty Author when not in data, got %q", link.Author())
+	if link.GetAuthor() != "" {
+		t.Errorf("expected empty Author when not in data, got %q", link.GetAuthor())
 	}
 }

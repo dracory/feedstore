@@ -1,6 +1,7 @@
 package feedstore
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/dracory/neat"
@@ -24,7 +25,9 @@ type feedImplementation struct {
 	StatusField        string    `db:"status"`
 	FetchIntervalField string    `db:"fetch_interval"`
 	LastFetchedAtField time.Time `db:"last_fetched_at"`
+	LanguageField      string    `db:"language"`
 	MemoField          string    `db:"memo"`
+	MetasField         string    `db:"metas"`
 	CreatedAtField     orm.CreatedAt
 	UpdatedAtField     orm.UpdatedAt
 	soft_delete.SoftDeletesMaxDate
@@ -40,32 +43,110 @@ type FeedInterface interface {
 	Data() map[string]string
 	MarkAsNotDirty(...string)
 
-	CreatedAt() string
-	CreatedAtCarbon() *carbon.Carbon
+	// ============================================================================
+	// == GETTERS AND SETTERS
+	// ============================================================================
+
+	// GetCreatedAt returns the created at timestamp as a string
+	GetCreatedAt() string
+
+	// GetCreatedAtCarbon returns the created at timestamp as a carbon instance
+	GetCreatedAtCarbon() *carbon.Carbon
+
+	// SetCreatedAt sets the created at timestamp
 	SetCreatedAt(createdAt string) FeedInterface
-	Description() string
+
+	// GetDescription returns the description
+	GetDescription() string
+
+	// SetDescription sets the description
 	SetDescription(description string) FeedInterface
-	FetchInterval() string
+
+	// GetFetchInterval returns the fetch interval
+	GetFetchInterval() string
+
+	// SetFetchInterval sets the fetch interval
 	SetFetchInterval(fetchInterval string) FeedInterface
-	ID() string
+
+	// GetID returns the ID
+	GetID() string
+
+	// SetID sets the ID
 	SetID(id string) FeedInterface
-	LastFetchedAt() string
-	LastFetchedAtCarbon() *carbon.Carbon
+
+	// GetLanguage returns the language
+	GetLanguage() string
+
+	// SetLanguage sets the language
+	SetLanguage(language string) FeedInterface
+
+	// GetLastFetchedAt returns the last fetched at timestamp as a string
+	GetLastFetchedAt() string
+
+	// GetLastFetchedAtCarbon returns the last fetched at timestamp as a carbon instance
+	GetLastFetchedAtCarbon() *carbon.Carbon
+
+	// SetLastFetchedAt sets the last fetched at timestamp
 	SetLastFetchedAt(lastFetchedAt time.Time) FeedInterface
+
+	// SetLastFetchedAtString sets the last fetched at timestamp from a string
 	SetLastFetchedAtString(lastFetchedAt string) FeedInterface
-	Memo() string
+
+	// GetMemo returns the memo
+	GetMemo() string
+
+	// SetMemo sets the memo
 	SetMemo(memo string) FeedInterface
-	Name() string
+
+	// GetMeta returns a specific meta value by key
+	GetMeta(key string) (string, error)
+
+	// SetMeta sets a specific meta value by key
+	SetMeta(key string, value string) error
+
+	// DeleteMeta removes a specific meta value by key
+	DeleteMeta(key string) error
+
+	// GetMetas returns all meta values as a map
+	GetMetas() (map[string]string, error)
+
+	// SetMetas sets all meta values from a map
+	SetMetas(metas map[string]string) error
+
+	// GetName returns the name
+	GetName() string
+
+	// SetName sets the name
 	SetName(name string) FeedInterface
+
+	// GetSoftDeletedAt returns the soft deleted at timestamp as a string
 	GetSoftDeletedAt() string
+
+	// GetSoftDeletedAtCarbon returns the soft deleted at timestamp as a carbon instance
 	GetSoftDeletedAtCarbon() *carbon.Carbon
+
+	// SetSoftDeletedAt sets the soft deleted at timestamp
 	SetSoftDeletedAt(softDeletedAt string) FeedInterface
-	Status() string
+
+	// GetStatus returns the status
+	GetStatus() string
+
+	// SetStatus sets the status
 	SetStatus(status string) FeedInterface
-	UpdatedAt() string
-	UpdatedAtCarbon() *carbon.Carbon
+
+	// GetUpdatedAt returns the updated at timestamp as a string
+	GetUpdatedAt() string
+
+	// GetUpdatedAtCarbon returns the updated at timestamp as a carbon instance
+	GetUpdatedAtCarbon() *carbon.Carbon
+
+	// SetUpdatedAt sets the updated at timestamp
 	SetUpdatedAt(updatedAt string) FeedInterface
-	URL() string
+
+	// GetURL returns the URL
+	GetURL() string
+
+	// SetURL sets the URL
 	SetURL(url string) FeedInterface
 }
 
@@ -83,7 +164,9 @@ func NewFeed() *feedImplementation {
 	feed.SetURL("")
 	feed.SetFetchInterval("600")
 	feed.SetLastFetchedAtString(neat.NullDateTime)
+	feed.SetLanguage("")
 	feed.SetMemo("")
+	_ = feed.SetMetas(map[string]string{})
 	feed.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	feed.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
 	feed.SetSoftDeletedAt(neat.MaxDateTime)
@@ -104,7 +187,13 @@ func NewFeedFromExistingData(data map[string]string) *feedImplementation {
 	if v, ok := data[COLUMN_LAST_FETCHED_AT]; ok {
 		feed.SetLastFetchedAtString(v)
 	}
+	if v, ok := data[COLUMN_LANGUAGE]; ok {
+		feed.SetLanguage(v)
+	}
 	feed.SetMemo(data[COLUMN_MEMO])
+	if v, ok := data[COLUMN_METAS]; ok {
+		feed.MetasField = v
+	}
 	if v, ok := data[COLUMN_CREATED_AT]; ok {
 		feed.SetCreatedAt(v)
 	}
@@ -121,13 +210,13 @@ func NewFeedFromExistingData(data map[string]string) *feedImplementation {
 
 // == SETTERS AND GETTERS =====================================================
 
-func (feed *feedImplementation) CreatedAt() string {
+func (feed *feedImplementation) GetCreatedAt() string {
 	if feed.CreatedAtField.CreatedAt.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(feed.CreatedAtField.CreatedAt).ToDateTimeString()
 }
-func (feed *feedImplementation) CreatedAtCarbon() *carbon.Carbon {
+func (feed *feedImplementation) GetCreatedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(feed.CreatedAtField.CreatedAt)
 }
 func (feed *feedImplementation) SetCreatedAt(createdAt string) FeedInterface {
@@ -139,7 +228,7 @@ func (feed *feedImplementation) SetCreatedAt(createdAt string) FeedInterface {
 	return feed
 }
 
-func (feed *feedImplementation) Description() string {
+func (feed *feedImplementation) GetDescription() string {
 	return feed.DescriptionField
 }
 
@@ -148,12 +237,12 @@ func (feed *feedImplementation) SetDescription(description string) FeedInterface
 	return feed
 }
 
-func (feed *feedImplementation) FetchInterval() string {
+func (feed *feedImplementation) GetFetchInterval() string {
 	return feed.FetchIntervalField
 }
 
-func (feed *feedImplementation) FetchIntervalInt64() (int64, error) {
-	return cast.ToInt64E(feed.FetchInterval())
+func (feed *feedImplementation) GetFetchIntervalInt64() (int64, error) {
+	return cast.ToInt64E(feed.GetFetchInterval())
 }
 
 func (feed *feedImplementation) SetFetchInterval(fetchInterval string) FeedInterface {
@@ -161,7 +250,7 @@ func (feed *feedImplementation) SetFetchInterval(fetchInterval string) FeedInter
 	return feed
 }
 
-func (feed *feedImplementation) ID() string {
+func (feed *feedImplementation) GetID() string {
 	return feed.ShortID.ID
 }
 
@@ -170,14 +259,14 @@ func (feed *feedImplementation) SetID(id string) FeedInterface {
 	return feed
 }
 
-func (feed *feedImplementation) LastFetchedAt() string {
+func (feed *feedImplementation) GetLastFetchedAt() string {
 	if feed.LastFetchedAtField.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(feed.LastFetchedAtField).ToDateTimeString()
 }
 
-func (feed *feedImplementation) LastFetchedAtCarbon() *carbon.Carbon {
+func (feed *feedImplementation) GetLastFetchedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(feed.LastFetchedAtField)
 }
 
@@ -195,7 +284,16 @@ func (feed *feedImplementation) SetLastFetchedAtString(lastFetchedAt string) Fee
 	return feed
 }
 
-func (feed *feedImplementation) Memo() string {
+func (feed *feedImplementation) GetLanguage() string {
+	return feed.LanguageField
+}
+
+func (feed *feedImplementation) SetLanguage(language string) FeedInterface {
+	feed.LanguageField = language
+	return feed
+}
+
+func (feed *feedImplementation) GetMemo() string {
 	return feed.MemoField
 }
 func (feed *feedImplementation) SetMemo(memo string) FeedInterface {
@@ -203,7 +301,58 @@ func (feed *feedImplementation) SetMemo(memo string) FeedInterface {
 	return feed
 }
 
-func (feed *feedImplementation) Name() string {
+func (feed *feedImplementation) GetMeta(key string) (string, error) {
+	metas, err := feed.GetMetas()
+	if err != nil {
+		return "", err
+	}
+	value, ok := metas[key]
+	if !ok {
+		return "", nil
+	}
+	return value, nil
+}
+
+func (feed *feedImplementation) SetMeta(key string, value string) error {
+	metas, err := feed.GetMetas()
+	if err != nil {
+		return err
+	}
+	metas[key] = value
+	return feed.SetMetas(metas)
+}
+
+func (feed *feedImplementation) DeleteMeta(key string) error {
+	metas, err := feed.GetMetas()
+	if err != nil {
+		return err
+	}
+	delete(metas, key)
+	return feed.SetMetas(metas)
+}
+
+func (feed *feedImplementation) GetMetas() (map[string]string, error) {
+	if feed.MetasField == "" {
+		return map[string]string{}, nil
+	}
+	var metas map[string]string
+	err := json.Unmarshal([]byte(feed.MetasField), &metas)
+	if err != nil {
+		return map[string]string{}, err
+	}
+	return metas, nil
+}
+
+func (feed *feedImplementation) SetMetas(metas map[string]string) error {
+	metasBytes, err := json.Marshal(metas)
+	if err != nil {
+		return err
+	}
+	feed.MetasField = string(metasBytes)
+	return nil
+}
+
+func (feed *feedImplementation) GetName() string {
 	return feed.NameField
 }
 func (feed *feedImplementation) SetName(name string) FeedInterface {
@@ -231,7 +380,7 @@ func (feed *feedImplementation) SetSoftDeletedAt(softDeletedAt string) FeedInter
 	return feed
 }
 
-func (feed *feedImplementation) Status() string {
+func (feed *feedImplementation) GetStatus() string {
 	return feed.StatusField
 }
 func (feed *feedImplementation) SetStatus(status string) FeedInterface {
@@ -239,13 +388,13 @@ func (feed *feedImplementation) SetStatus(status string) FeedInterface {
 	return feed
 }
 
-func (feed *feedImplementation) UpdatedAt() string {
+func (feed *feedImplementation) GetUpdatedAt() string {
 	if feed.UpdatedAtField.UpdatedAt.IsZero() {
 		return neat.NullDateTime
 	}
 	return carbon.CreateFromStdTime(feed.UpdatedAtField.UpdatedAt).ToDateTimeString()
 }
-func (feed *feedImplementation) UpdatedAtCarbon() *carbon.Carbon {
+func (feed *feedImplementation) GetUpdatedAtCarbon() *carbon.Carbon {
 	return carbon.CreateFromStdTime(feed.UpdatedAtField.UpdatedAt)
 }
 func (feed *feedImplementation) SetUpdatedAt(updatedAt string) FeedInterface {
@@ -257,7 +406,7 @@ func (feed *feedImplementation) SetUpdatedAt(updatedAt string) FeedInterface {
 	return feed
 }
 
-func (feed *feedImplementation) URL() string {
+func (feed *feedImplementation) GetURL() string {
 	return feed.URLField
 }
 
@@ -268,16 +417,18 @@ func (feed *feedImplementation) SetURL(url string) FeedInterface {
 
 func (feed *feedImplementation) Data() map[string]string {
 	data := map[string]string{}
-	data[COLUMN_ID] = feed.ID()
-	data[COLUMN_NAME] = feed.Name()
-	data[COLUMN_DESCRIPTION] = feed.Description()
-	data[COLUMN_URL] = feed.URL()
-	data[COLUMN_STATUS] = feed.Status()
-	data[COLUMN_FETCH_INTERVAL] = feed.FetchInterval()
-	data[COLUMN_LAST_FETCHED_AT] = feed.LastFetchedAt()
-	data[COLUMN_MEMO] = feed.Memo()
-	data[COLUMN_CREATED_AT] = feed.CreatedAt()
-	data[COLUMN_UPDATED_AT] = feed.UpdatedAt()
+	data[COLUMN_ID] = feed.GetID()
+	data[COLUMN_NAME] = feed.GetName()
+	data[COLUMN_DESCRIPTION] = feed.GetDescription()
+	data[COLUMN_URL] = feed.GetURL()
+	data[COLUMN_STATUS] = feed.GetStatus()
+	data[COLUMN_FETCH_INTERVAL] = feed.GetFetchInterval()
+	data[COLUMN_LAST_FETCHED_AT] = feed.GetLastFetchedAt()
+	data[COLUMN_LANGUAGE] = feed.GetLanguage()
+	data[COLUMN_MEMO] = feed.GetMemo()
+	data[COLUMN_METAS] = feed.MetasField
+	data[COLUMN_CREATED_AT] = feed.GetCreatedAt()
+	data[COLUMN_UPDATED_AT] = feed.GetUpdatedAt()
 	data[COLUMN_SOFT_DELETED_AT] = feed.GetSoftDeletedAt()
 	return data
 }
