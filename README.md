@@ -138,17 +138,17 @@ err = store.LinkCreate(link1)
 if err != nil {
     log.Printf("⚠️ Failed to create link1: %v", err)
 } else {
-    fmt.Printf("✅ Link created successfully: ID=%s, Title=%s\n", link1.ID(), link1.Title())
+    fmt.Printf("✅ Link created successfully: ID=%s, Title=%s\n", link1.GetID(), link1.GetTitle())
 }
 
 // --- Find Link by ID ---
-foundLink, err := store.LinkFindByID(link1.ID())
+foundLink, err := store.LinkFindByID(link1.GetID())
 if err != nil {
-    log.Printf("⚠️ Error finding link %s: %v", link1.ID(), err)
+    log.Printf("⚠️ Error finding link %s: %v", link1.GetID(), err)
 } else if foundLink == nil {
-    fmt.Printf("ℹ️ Link %s not found.\n", link1.ID())
+    fmt.Printf("ℹ️ Link %s not found.\n", link1.GetID())
 } else {
-    fmt.Printf("✅ Found link by ID: %s (Title: %s)\n", foundLink.ID(), foundLink.Title())
+    fmt.Printf("✅ Found link by ID: %s (Title: %s)\n", foundLink.GetID(), foundLink.GetTitle())
 }
 
 // --- List Links for a Specific Feed ---
@@ -160,7 +160,7 @@ if err != nil {
 } else {
     fmt.Printf("✅ Found %d link(s) for feed %s:\n", len(feedLinks), feedID)
     for _, lnk := range feedLinks {
-        fmt.Printf("   - ID: %s, Title: %s, URL: %s\n", lnk.ID(), lnk.Title(), lnk.URL())
+        fmt.Printf("   - ID: %s, Title: %s, URL: %s\n", lnk.GetID(), lnk.GetTitle(), lnk.GetURL())
     }
 }
 
@@ -168,21 +168,21 @@ if err != nil {
 foundLink.SetDescription("Added a description.")
 err = store.LinkUpdate(foundLink)
 if err != nil {
-    log.Printf("⚠️ Error updating link %s: %v", foundLink.ID(), err)
+    log.Printf("⚠️ Error updating link %s: %v", foundLink.GetID(), err)
 } else {
-    fmt.Printf("✅ Link %s updated successfully.\n", foundLink.ID())
+    fmt.Printf("✅ Link %s updated successfully.\n", foundLink.GetID())
     // Verify update
-    updatedLink, _ := store.LinkFindByID(foundLink.ID())
+    updatedLink, _ := store.LinkFindByID(foundLink.GetID())
     if updatedLink != nil {
-        fmt.Printf("   Updated Description: %s\n", updatedLink.Description())
+        fmt.Printf("   Updated Description: %s\n", updatedLink.GetDescription())
     }
 }
 
 // --- Soft Delete a Link ---
-err = store.LinkSoftDeleteByID(link2.ID())
+err = store.LinkSoftDeleteByID(link2.GetID())
 if err != nil {
-    log.Printf("⚠️ Error soft deleting link %s: %v", link2.ID(), err)
+    log.Printf("⚠️ Error soft deleting link %s: %v", link2.GetID(), err)
 } else {
-    fmt.Printf("✅ Link %s soft deleted.\n", link2.ID())
+    fmt.Printf("✅ Link %s soft deleted.\n", link2.GetID())
 }
 ```

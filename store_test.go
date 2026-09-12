@@ -648,7 +648,7 @@ func TestStoreLinkCount(t *testing.T) {
 		if err := store.LinkCreate(ctx, l); err != nil {
 			t.Fatalf("LinkCreate failed: %v", err)
 		}
-		return l.ID()
+		return l.GetID()
 	}
 
 	ids := []string{}
@@ -721,7 +721,7 @@ func TestStoreLinkDelete(t *testing.T) {
 	}
 
 	// 2. Verify it exists
-	foundLink, err := store.LinkFindByID(ctx, link.ID())
+	foundLink, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID before delete failed: %v", err)
 	}
@@ -736,7 +736,7 @@ func TestStoreLinkDelete(t *testing.T) {
 	}
 
 	// 4. Verify it's gone
-	foundLink, err = store.LinkFindByID(ctx, link.ID())
+	foundLink, err = store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID after delete failed: %v", err)
 	}
@@ -769,7 +769,7 @@ func TestStoreLinkDeleteByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
-	linkID := link.ID()
+	linkID := link.GetID()
 
 	// 2. Verify it exists
 	foundLink, err := store.LinkFindByID(ctx, linkID)
@@ -878,37 +878,37 @@ func TestStoreLinkList(t *testing.T) {
 			name:          "List all (excluding soft deleted)",
 			query:         LinkQuery().SetLimit(10),
 			expectedCount: 3,
-			expectedIDs:   []string{link1.ID(), link2.ID(), link3.ID()},
+			expectedIDs:   []string{link1.GetID(), link2.GetID(), link3.GetID()},
 		},
 		{
 			name:          "List with specific ID",
-			query:         LinkQuery().SetID(link2.ID()),
+			query:         LinkQuery().SetID(link2.GetID()),
 			expectedCount: 1,
-			expectedIDs:   []string{link2.ID()},
+			expectedIDs:   []string{link2.GetID()},
 		},
 		{
 			name:          "List by FeedID",
 			query:         LinkQuery().SetFeedID("feedA").SetLimit(10), // Assumes SetFeedID is implemented
 			expectedCount: 2,
-			expectedIDs:   []string{link1.ID(), link3.ID()},
+			expectedIDs:   []string{link1.GetID(), link3.GetID()},
 		},
 		{
 			name:          "List with specific Status",
 			query:         LinkQuery().SetStatus(LINK_STATUS_ACTIVE).SetLimit(10),
 			expectedCount: 2, // link1, link3
-			expectedIDs:   []string{link1.ID(), link3.ID()},
+			expectedIDs:   []string{link1.GetID(), link3.GetID()},
 		},
 		{
 			name:          "List including soft deleted",
 			query:         LinkQuery().SetLimit(10).SetWithSoftDeleted(true),
 			expectedCount: 4,
-			expectedIDs:   []string{link1.ID(), link2.ID(), link3.ID(), link4.ID()},
+			expectedIDs:   []string{link1.GetID(), link2.GetID(), link3.GetID(), link4.GetID()},
 		},
 		{
 			name:          "List only soft deleted",
 			query:         LinkQuery().SetLimit(10).SetOnlySoftDeleted(true),
 			expectedCount: 1,
-			expectedIDs:   []string{link4.ID()},
+			expectedIDs:   []string{link4.GetID()},
 		},
 		{
 			name:          "List non-existent ID",
@@ -955,7 +955,7 @@ func TestStoreLinkList(t *testing.T) {
 			if len(tc.expectedIDs) > 0 {
 				returnedIDs := make([]string, len(links))
 				for i, l := range links {
-					returnedIDs[i] = l.ID()
+					returnedIDs[i] = l.GetID()
 				}
 				// Use elementsMatch helper for unordered comparison
 				if !elementsMatch(t, tc.expectedIDs, returnedIDs) {
@@ -980,7 +980,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 2. Verify it exists and is not soft deleted
-	foundLink, err := store.LinkFindByID(ctx, link.ID())
+	foundLink, err := store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID before soft delete failed: %v", err)
 	}
@@ -1003,7 +1003,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 5. Verify it's not found by default FindByID
-	foundLink, err = store.LinkFindByID(ctx, link.ID())
+	foundLink, err = store.LinkFindByID(ctx, link.GetID())
 	if err != nil {
 		t.Fatalf("LinkFindByID after soft delete failed: %v", err)
 	}
@@ -1012,7 +1012,7 @@ func TestStoreLinkSoftDelete(t *testing.T) {
 	}
 
 	// 6. Verify it IS found when including soft deleted
-	list, err := store.LinkList(ctx, LinkQuery().SetID(link.ID()).SetWithSoftDeleted(true))
+	list, err := store.LinkList(ctx, LinkQuery().SetID(link.GetID()).SetWithSoftDeleted(true))
 	if err != nil {
 		t.Fatalf("LinkList with soft deleted failed: %v", err)
 	}
@@ -1042,7 +1042,7 @@ func TestStoreLinkSoftDeleteByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
-	linkID := link.ID()
+	linkID := link.GetID()
 
 	// 2. Verify it exists
 	foundLink, err := store.LinkFindByID(ctx, linkID)
@@ -1106,7 +1106,7 @@ func TestStoreLinkUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LinkCreate failed: %v", err)
 	}
-	linkID := link.ID()
+	linkID := link.GetID()
 	initialUpdatedAt := link.GetUpdatedAt()
 
 	// 2. Modify the link object
