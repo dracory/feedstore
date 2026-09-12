@@ -173,8 +173,11 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 				return err
 			}
 		}
-		// Add dedup_hash index for existing tables (guard with HasIndex for idempotency)
-		if !st.db.Schema().HasIndex(st.linkTableName, COLUMN_DEDUP_HASH) {
+		// Add dedup_hash index for existing tables (guard with HasIndex for idempotency).
+		// neat generates index names as {table}_{column}_index, so we must check
+		// the full index name, not just the column name.
+		dedupHashIndexName := st.linkTableName + "_" + COLUMN_DEDUP_HASH + "_index"
+		if !st.db.Schema().HasIndex(st.linkTableName, dedupHashIndexName) {
 			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
 				table.Index(COLUMN_DEDUP_HASH)
 			})
