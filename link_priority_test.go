@@ -180,18 +180,19 @@ func TestStore_LinkList_FilterByPriority(t *testing.T) {
 // TestNewLinkFromExistingData_WithPriority verifies loading priority from DB data.
 func TestNewLinkFromExistingData_WithPriority(t *testing.T) {
 	data := map[string]string{
-		COLUMN_ID:         "test789",
-		COLUMN_FEED_ID:    "feedA",
-		COLUMN_STATUS:     LINK_STATUS_ACTIVE,
-		COLUMN_TITLE:      "Priority Test",
-		COLUMN_URL:        "https://example.com/test",
-		COLUMN_VIEWS:      "0",
-		COLUMN_VOTES_UP:   "0",
-		COLUMN_VOTES_DOWN: "0",
-		COLUMN_TIME:       "2026-08-31 10:00:00",
-		COLUMN_CREATED_AT: "2026-08-31 10:00:00",
-		COLUMN_UPDATED_AT: "2026-08-31 10:00:00",
-		COLUMN_PRIORITY:   "1",
+		COLUMN_ID:           "test789",
+		COLUMN_FEED_ID:      "feedA",
+		COLUMN_STATUS:       LINK_STATUS_ACTIVE,
+		COLUMN_TITLE:        "Priority Test",
+		COLUMN_URL:          "https://example.com/test",
+		COLUMN_VIEWS:        "0",
+		COLUMN_VOTES_UP:     "0",
+		COLUMN_VOTES_DOWN:   "0",
+		COLUMN_PUBLISHED_AT: "2026-08-31 10:00:00",
+		COLUMN_DEDUP_HASH:   "",
+		COLUMN_CREATED_AT:   "2026-08-31 10:00:00",
+		COLUMN_UPDATED_AT:   "2026-08-31 10:00:00",
+		COLUMN_PRIORITY:     "1",
 	}
 
 	link := NewLinkFromExistingData(data)

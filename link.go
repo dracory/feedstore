@@ -32,7 +32,8 @@ type linkImplementation struct {
 	ReportedAtField  time.Time `db:"reported_at"`
 	ReportField      string    `db:"report"`
 	CheckedAtField   time.Time `db:"checked_at"`
-	TimeField        time.Time `db:"time"`
+	PublishedAtField time.Time `db:"published_at"`
+	DedupHashField   string    `db:"dedup_hash"`
 	LanguageField    string    `db:"language"`
 	MetasField       string    `db:"metas"`
 	CreatedAtField   orm.CreatedAt
@@ -77,10 +78,12 @@ type LinkInterface interface {
 	SetStatus(status string) LinkInterface
 	GetTitle() string
 	SetTitle(title string) LinkInterface
-	GetTime() string
-	GetTimeCarbon() *carbon.Carbon
-	SetTime(time time.Time) LinkInterface
-	SetTimeString(time string) LinkInterface
+	GetPublishedAt() string
+	GetPublishedAtCarbon() *carbon.Carbon
+	SetPublishedAt(publishedAt time.Time) LinkInterface
+	SetPublishedAtString(publishedAt string) LinkInterface
+	GetDedupHash() string
+	SetDedupHash(dedupHash string) LinkInterface
 	GetSoftDeletedAt() string
 	GetSoftDeletedAtCarbon() *carbon.Carbon
 	SetSoftDeletedAt(softDeletedAt string) LinkInterface
@@ -126,7 +129,8 @@ func NewLink() *linkImplementation {
 	link.SetReportedAtString(neat.NullDateTime)
 	link.SetReport("")
 	link.SetCheckedAtString(neat.NullDateTime)
-	link.SetTimeString(neat.NullDateTime)
+	link.SetPublishedAtString(neat.NullDateTime)
+	link.SetDedupHash("")
 	link.SetLanguage("")
 	_ = link.SetMetas(map[string]string{})
 	link.SetCreatedAt(carbon.Now(carbon.UTC).ToDateTimeString())
@@ -164,8 +168,11 @@ func NewLinkFromExistingData(data map[string]string) *linkImplementation {
 	if v, ok := data[COLUMN_CHECKED_AT]; ok {
 		link.SetCheckedAtString(v)
 	}
-	if v, ok := data[COLUMN_TIME]; ok {
-		link.SetTimeString(v)
+	if v, ok := data[COLUMN_PUBLISHED_AT]; ok {
+		link.SetPublishedAtString(v)
+	}
+	if v, ok := data[COLUMN_DEDUP_HASH]; ok {
+		link.SetDedupHash(v)
 	}
 	if v, ok := data[COLUMN_LANGUAGE]; ok {
 		link.SetLanguage(v)
@@ -440,28 +447,37 @@ func (link *linkImplementation) SetReportedAtString(reportedAt string) LinkInter
 	return link
 }
 
-func (link *linkImplementation) GetTime() string {
-	if link.TimeField.IsZero() {
+func (link *linkImplementation) GetPublishedAt() string {
+	if link.PublishedAtField.IsZero() {
 		return neat.NullDateTime
 	}
-	return carbon.CreateFromStdTime(link.TimeField).ToDateTimeString()
+	return carbon.CreateFromStdTime(link.PublishedAtField).ToDateTimeString()
 }
 
-func (link *linkImplementation) GetTimeCarbon() *carbon.Carbon {
-	return carbon.CreateFromStdTime(link.TimeField)
+func (link *linkImplementation) GetPublishedAtCarbon() *carbon.Carbon {
+	return carbon.CreateFromStdTime(link.PublishedAtField)
 }
 
-func (link *linkImplementation) SetTime(time time.Time) LinkInterface {
-	link.TimeField = time
+func (link *linkImplementation) SetPublishedAt(publishedAt time.Time) LinkInterface {
+	link.PublishedAtField = publishedAt
 	return link
 }
 
-func (link *linkImplementation) SetTimeString(timeStr string) LinkInterface {
-	if timeStr == "" || timeStr == neat.NullDateTime {
-		link.TimeField = time.Time{}
+func (link *linkImplementation) SetPublishedAtString(publishedAt string) LinkInterface {
+	if publishedAt == "" || publishedAt == neat.NullDateTime {
+		link.PublishedAtField = time.Time{}
 		return link
 	}
-	link.TimeField = carbon.Parse(timeStr, carbon.UTC).StdTime()
+	link.PublishedAtField = carbon.Parse(publishedAt, carbon.UTC).StdTime()
+	return link
+}
+
+func (link *linkImplementation) GetDedupHash() string {
+	return link.DedupHashField
+}
+
+func (link *linkImplementation) SetDedupHash(dedupHash string) LinkInterface {
+	link.DedupHashField = dedupHash
 	return link
 }
 
@@ -521,7 +537,8 @@ func (link *linkImplementation) Data() map[string]string {
 	data[COLUMN_REPORTED_AT] = link.GetReportedAt()
 	data[COLUMN_REPORT] = link.GetReport()
 	data[COLUMN_CHECKED_AT] = link.GetCheckedAt()
-	data[COLUMN_TIME] = link.GetTime()
+	data[COLUMN_PUBLISHED_AT] = link.GetPublishedAt()
+	data[COLUMN_DEDUP_HASH] = link.GetDedupHash()
 	data[COLUMN_LANGUAGE] = link.GetLanguage()
 	data[COLUMN_METAS] = link.MetasField
 	data[COLUMN_CREATED_AT] = link.GetCreatedAt()

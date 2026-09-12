@@ -211,20 +211,21 @@ func TestStore_LinkList_WithContentAuthor(t *testing.T) {
 // NewLinkFromExistingData correctly loads content and author from DB data.
 func TestNewLinkFromExistingData_WithContentAuthor(t *testing.T) {
 	data := map[string]string{
-		COLUMN_ID:          "test123",
-		COLUMN_FEED_ID:     "feedA",
-		COLUMN_STATUS:      LINK_STATUS_ACTIVE,
-		COLUMN_TITLE:       "Test Title",
-		COLUMN_DESCRIPTION: "Test Description",
-		COLUMN_CONTENT:     "Test content from data map",
-		COLUMN_AUTHOR:      "Test author from data map",
-		COLUMN_URL:         "https://example.com/test",
-		COLUMN_VIEWS:       "0",
-		COLUMN_VOTES_UP:    "0",
-		COLUMN_VOTES_DOWN:  "0",
-		COLUMN_TIME:        "2026-08-31 10:00:00",
-		COLUMN_CREATED_AT:  "2026-08-31 10:00:00",
-		COLUMN_UPDATED_AT:  "2026-08-31 10:00:00",
+		COLUMN_ID:           "test123",
+		COLUMN_FEED_ID:      "feedA",
+		COLUMN_STATUS:       LINK_STATUS_ACTIVE,
+		COLUMN_TITLE:        "Test Title",
+		COLUMN_DESCRIPTION:  "Test Description",
+		COLUMN_CONTENT:      "Test content from data map",
+		COLUMN_AUTHOR:       "Test author from data map",
+		COLUMN_URL:          "https://example.com/test",
+		COLUMN_VIEWS:        "0",
+		COLUMN_VOTES_UP:     "0",
+		COLUMN_VOTES_DOWN:   "0",
+		COLUMN_PUBLISHED_AT: "2026-08-31 10:00:00",
+		COLUMN_DEDUP_HASH:   "",
+		COLUMN_CREATED_AT:   "2026-08-31 10:00:00",
+		COLUMN_UPDATED_AT:   "2026-08-31 10:00:00",
 	}
 
 	link := NewLinkFromExistingData(data)

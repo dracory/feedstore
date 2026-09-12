@@ -89,14 +89,19 @@ type LinkQueryInterface interface {
 	GetUpdatedAtLte() string
 	SetUpdatedAtLte(updatedAt string) LinkQueryInterface
 
-	// Time (publication datetime) filters
-	IsTimeGteSet() bool
-	GetTimeGte() string
-	SetTimeGte(time string) LinkQueryInterface
+	// PublishedAt (publication datetime) filters
+	IsPublishedAtGteSet() bool
+	GetPublishedAtGte() string
+	SetPublishedAtGte(publishedAt string) LinkQueryInterface
 
-	IsTimeLteSet() bool
-	GetTimeLte() string
-	SetTimeLte(time string) LinkQueryInterface
+	IsPublishedAtLteSet() bool
+	GetPublishedAtLte() string
+	SetPublishedAtLte(publishedAt string) LinkQueryInterface
+
+	// Dedup hash filter
+	IsDedupHashSet() bool
+	GetDedupHash() string
+	SetDedupHash(dedupHash string) LinkQueryInterface
 
 	// Priority filter
 	IsPrioritySet() bool
@@ -172,11 +177,14 @@ type linkQuery struct {
 	isUpdatedAtLteSet bool
 	updatedAtLte      string
 
-	isTimeGteSet bool
-	timeGte      string
+	isPublishedAtGteSet bool
+	publishedAtGte      string
 
-	isTimeLteSet bool
-	timeLte      string
+	isPublishedAtLteSet bool
+	publishedAtLte      string
+
+	isDedupHashSet bool
+	dedupHash      string
 
 	isPrioritySet bool
 	priority      string
@@ -235,12 +243,16 @@ func (q *linkQuery) Validate() error {
 		return errors.New("document query: url cannot be empty")
 	}
 
-	if q.IsTimeGteSet() && q.GetTimeGte() == "" {
-		return errors.New("document query: time_gte cannot be empty")
+	if q.IsPublishedAtGteSet() && q.GetPublishedAtGte() == "" {
+		return errors.New("document query: published_at_gte cannot be empty")
 	}
 
-	if q.IsTimeLteSet() && q.GetTimeLte() == "" {
-		return errors.New("document query: time_lte cannot be empty")
+	if q.IsPublishedAtLteSet() && q.GetPublishedAtLte() == "" {
+		return errors.New("document query: published_at_lte cannot be empty")
+	}
+
+	if q.IsDedupHashSet() && q.GetDedupHash() == "" {
+		return errors.New("document query: dedup_hash cannot be empty")
 	}
 
 	if q.IsPrioritySet() && q.GetPriority() == "" {
@@ -593,40 +605,61 @@ func (q *linkQuery) SetOnlySoftDeleted(onlySoftDeleted bool) LinkQueryInterface 
 }
 
 // ============================================================================
-// == Time (publication datetime) Getters and Setters
+// == PublishedAt (publication datetime) Getters and Setters
 // ============================================================================
 
-func (q *linkQuery) IsTimeGteSet() bool {
-	return q.isTimeGteSet
+func (q *linkQuery) IsPublishedAtGteSet() bool {
+	return q.isPublishedAtGteSet
 }
 
-func (q *linkQuery) GetTimeGte() string {
-	if q.IsTimeGteSet() {
-		return q.timeGte
+func (q *linkQuery) GetPublishedAtGte() string {
+	if q.IsPublishedAtGteSet() {
+		return q.publishedAtGte
 	}
 	return ""
 }
 
-func (q *linkQuery) SetTimeGte(timeGte string) LinkQueryInterface {
-	q.isTimeGteSet = true
-	q.timeGte = timeGte
+func (q *linkQuery) SetPublishedAtGte(publishedAt string) LinkQueryInterface {
+	q.isPublishedAtGteSet = true
+	q.publishedAtGte = publishedAt
 	return q
 }
 
-func (q *linkQuery) IsTimeLteSet() bool {
-	return q.isTimeLteSet
+func (q *linkQuery) IsPublishedAtLteSet() bool {
+	return q.isPublishedAtLteSet
 }
 
-func (q *linkQuery) GetTimeLte() string {
-	if q.IsTimeLteSet() {
-		return q.timeLte
+func (q *linkQuery) GetPublishedAtLte() string {
+	if q.IsPublishedAtLteSet() {
+		return q.publishedAtLte
 	}
 	return ""
 }
 
-func (q *linkQuery) SetTimeLte(timeLte string) LinkQueryInterface {
-	q.isTimeLteSet = true
-	q.timeLte = timeLte
+func (q *linkQuery) SetPublishedAtLte(publishedAt string) LinkQueryInterface {
+	q.isPublishedAtLteSet = true
+	q.publishedAtLte = publishedAt
+	return q
+}
+
+// ============================================================================
+// == DedupHash Getters and Setters
+// ============================================================================
+
+func (q *linkQuery) IsDedupHashSet() bool {
+	return q.isDedupHashSet
+}
+
+func (q *linkQuery) GetDedupHash() string {
+	if q.IsDedupHashSet() {
+		return q.dedupHash
+	}
+	return ""
+}
+
+func (q *linkQuery) SetDedupHash(dedupHash string) LinkQueryInterface {
+	q.isDedupHashSet = true
+	q.dedupHash = dedupHash
 	return q
 }
 

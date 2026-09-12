@@ -97,9 +97,18 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 				return err
 			}
 		}
+		// Widen ID column to 40 to support GUIDs/UUIDs
+		if st.db.Schema().HasColumn(st.feedTableName, COLUMN_ID) {
+			err := st.db.Schema().Table(st.feedTableName, func(table contractsschema.Blueprint) {
+				table.String(COLUMN_ID, 40).Change()
+			})
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		err := st.db.Schema().Create(st.feedTableName, func(table contractsschema.Blueprint) {
-			table.String(COLUMN_ID, 9)
+			table.String(COLUMN_ID, 40)
 			table.Primary(COLUMN_ID)
 			table.String(COLUMN_NAME, 255)
 			table.String(COLUMN_DESCRIPTION, 1024).Nullable()
@@ -145,11 +154,55 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 				return err
 			}
 		}
+		// Rename time → published_at for existing tables.
+		// "time" is the old column name (hardcoded, not a constant — COLUMN_TIME was removed).
+		if st.db.Schema().HasColumn(st.linkTableName, "time") {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.RenameColumn("time", COLUMN_PUBLISHED_AT)
+			})
+			if err != nil {
+				return err
+			}
+		}
+		// Add dedup_hash column for existing tables
+		if !st.db.Schema().HasColumn(st.linkTableName, COLUMN_DEDUP_HASH) {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.String(COLUMN_DEDUP_HASH, 64).Nullable()
+			})
+			if err != nil {
+				return err
+			}
+		}
+		// Add dedup_hash index for existing tables (idempotent — neat skips if index exists)
+		err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+			table.Index(COLUMN_DEDUP_HASH)
+		})
+		if err != nil {
+			return err
+		}
+		// Widen ID column to 40 to support GUIDs/UUIDs
+		if st.db.Schema().HasColumn(st.linkTableName, COLUMN_ID) {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.String(COLUMN_ID, 40).Change()
+			})
+			if err != nil {
+				return err
+			}
+		}
+		// Widen feed_id column to 40 to match the feed table's ID column
+		if st.db.Schema().HasColumn(st.linkTableName, COLUMN_FEED_ID) {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.String(COLUMN_FEED_ID, 40).Change()
+			})
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		err := st.db.Schema().Create(st.linkTableName, func(table contractsschema.Blueprint) {
-			table.String(COLUMN_ID, 9)
+			table.String(COLUMN_ID, 40)
 			table.Primary(COLUMN_ID)
-			table.String(COLUMN_FEED_ID, 9)
+			table.String(COLUMN_FEED_ID, 40)
 			table.String(COLUMN_STATUS, 50)
 			table.String(COLUMN_TITLE, 255)
 			table.String(COLUMN_DESCRIPTION, 1024).Nullable()
@@ -163,13 +216,15 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 			table.DateTime(COLUMN_REPORTED_AT).Nullable()
 			table.Text(COLUMN_REPORT).Nullable()
 			table.DateTime(COLUMN_CHECKED_AT).Nullable()
-			table.DateTime(COLUMN_TIME).Nullable()
+			table.DateTime(COLUMN_PUBLISHED_AT).Nullable()
+			table.String(COLUMN_DEDUP_HASH, 64).Nullable()
 			table.String(COLUMN_LANGUAGE, 10).Nullable()
 			table.LongText(COLUMN_METAS).Nullable()
 			table.DateTime(COLUMN_CREATED_AT)
 			table.DateTime(COLUMN_UPDATED_AT)
 			table.DateTime(COLUMN_SOFT_DELETED_AT)
 			table.Index(COLUMN_FEED_ID)
+			table.Index(COLUMN_DEDUP_HASH)
 		})
 
 		if err != nil {
@@ -723,13 +778,18 @@ func (st *storeImplementation) buildLinkQuery(query LinkQueryInterface) contract
 		q = q.Where("updated_at <= ?", query.GetUpdatedAtLte())
 	}
 
-	// Time (publication datetime) filters
-	if query.IsTimeGteSet() {
-		q = q.Where("time >= ?", query.GetTimeGte())
+	// PublishedAt (publication datetime) filters
+	if query.IsPublishedAtGteSet() {
+		q = q.Where("published_at >= ?", query.GetPublishedAtGte())
 	}
 
-	if query.IsTimeLteSet() {
-		q = q.Where("time <= ?", query.GetTimeLte())
+	if query.IsPublishedAtLteSet() {
+		q = q.Where("published_at <= ?", query.GetPublishedAtLte())
+	}
+
+	// Dedup hash filter
+	if query.IsDedupHashSet() {
+		q = q.Where("dedup_hash = ?", query.GetDedupHash())
 	}
 
 	// Priority filter
@@ -828,7 +888,8 @@ func (st *storeImplementation) linkToMap(link LinkInterface) (map[string]any, er
 		COLUMN_REPORTED_AT:     link.GetReportedAt(),
 		COLUMN_REPORT:          link.GetReport(),
 		COLUMN_CHECKED_AT:      link.GetCheckedAt(),
-		COLUMN_TIME:            link.GetTime(),
+		COLUMN_PUBLISHED_AT:    link.GetPublishedAt(),
+		COLUMN_DEDUP_HASH:      link.GetDedupHash(),
 		COLUMN_LANGUAGE:        link.GetLanguage(),
 		COLUMN_METAS:           string(metasBytes),
 		COLUMN_CREATED_AT:      link.GetCreatedAt(),
