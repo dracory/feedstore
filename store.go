@@ -173,12 +173,14 @@ func (st *storeImplementation) MigrateUp(ctx context.Context, tx ...*sql.Tx) err
 				return err
 			}
 		}
-		// Add dedup_hash index for existing tables (idempotent — neat skips if index exists)
-		err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
-			table.Index(COLUMN_DEDUP_HASH)
-		})
-		if err != nil {
-			return err
+		// Add dedup_hash index for existing tables (guard with HasIndex for idempotency)
+		if !st.db.Schema().HasIndex(st.linkTableName, COLUMN_DEDUP_HASH) {
+			err := st.db.Schema().Table(st.linkTableName, func(table contractsschema.Blueprint) {
+				table.Index(COLUMN_DEDUP_HASH)
+			})
+			if err != nil {
+				return err
+			}
 		}
 		// Widen ID column to 40 to support GUIDs/UUIDs
 		if st.db.Schema().HasColumn(st.linkTableName, COLUMN_ID) {
