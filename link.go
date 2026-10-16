@@ -3,11 +3,11 @@ package feedstore
 import (
 	"encoding/json"
 	"time"
+	"uuid"
 
 	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
-	neatuid "github.com/dracory/neat/support/uid"
 	"github.com/dromara/carbon/v2"
 )
 
@@ -16,7 +16,7 @@ import (
 // ============================================================================
 
 type linkImplementation struct {
-	orm.ShortID
+	orm.StringID
 
 	FeedIDField      string    `db:"feed_id"`
 	StatusField      string    `db:"status"`
@@ -118,7 +118,7 @@ var _ LinkInterface = (*linkImplementation)(nil)
 
 func NewLink() *linkImplementation {
 	link := &linkImplementation{}
-	link.SetID(neatuid.GenerateShortID())
+	link.SetID(uuid.NewV7().String())
 	link.SetDescription("")
 	link.SetContent("")
 	link.SetAuthor("")
@@ -291,11 +291,11 @@ func (link *linkImplementation) SetFeedID(feedID string) LinkInterface {
 }
 
 func (link *linkImplementation) GetID() string {
-	return link.ShortID.ID
+	return link.StringID.ID
 }
 
 func (link *linkImplementation) SetID(id string) LinkInterface {
-	link.ShortID.ID = id
+	link.StringID.ID = id
 	return link
 }
 

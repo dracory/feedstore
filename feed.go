@@ -3,11 +3,11 @@ package feedstore
 import (
 	"encoding/json"
 	"time"
+	"uuid"
 
 	"github.com/dracory/neat"
 	"github.com/dracory/neat/database/orm"
 	"github.com/dracory/neat/database/soft_delete"
-	neatuid "github.com/dracory/neat/support/uid"
 	"github.com/dromara/carbon/v2"
 	"github.com/spf13/cast"
 )
@@ -17,7 +17,7 @@ import (
 // ============================================================================
 
 type feedImplementation struct {
-	orm.ShortID
+	orm.StringID
 
 	NameField          string    `db:"name"`
 	DescriptionField   string    `db:"description"`
@@ -158,7 +158,7 @@ var _ FeedInterface = (*feedImplementation)(nil)
 
 func NewFeed() *feedImplementation {
 	feed := &feedImplementation{}
-	feed.SetID(neatuid.GenerateShortID())
+	feed.SetID(uuid.NewV7().String())
 	feed.SetStatus(FEED_STATUS_INACTIVE)
 	feed.SetDescription("")
 	feed.SetURL("")
@@ -251,11 +251,11 @@ func (feed *feedImplementation) SetFetchInterval(fetchInterval string) FeedInter
 }
 
 func (feed *feedImplementation) GetID() string {
-	return feed.ShortID.ID
+	return feed.StringID.ID
 }
 
 func (feed *feedImplementation) SetID(id string) FeedInterface {
-	feed.ShortID.ID = id
+	feed.StringID.ID = id
 	return feed
 }
 
